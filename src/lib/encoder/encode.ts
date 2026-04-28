@@ -10,13 +10,17 @@ export type EncodeOptions = {
   template: CanvasTemplate;
   info: ProfileInfo;
   theme: TemplateTheme;
+  loopDuration: number;
+  /** Forwarded to renderFrame; defaults to true. */
+  loopText?: boolean;
   onProgress?: (p: EncodeProgress) => void;
 };
 
 export async function encodeGif(opts: EncodeOptions): Promise<Blob> {
-  const { template, info, theme, onProgress } = opts;
-  const { width, height, fps, duration, renderFrame } = template;
-  const totalFrames = Math.max(1, Math.round(duration * fps));
+  const { template, info, theme, loopDuration, loopText, onProgress } = opts;
+  const renderOpts = { loopText: loopText ?? true };
+  const { width, height, fps, renderFrame } = template;
+  const totalFrames = Math.max(1, Math.round(loopDuration * fps));
 
   // Render canvas (offscreen for perf; falls back to in-DOM if needed).
   const canvas: OffscreenCanvas | HTMLCanvasElement =
@@ -83,7 +87,7 @@ export async function encodeGif(opts: EncodeOptions): Promise<Blob> {
         for (let i = 0; i < totalFrames; i++) {
           const t = i / fps;
           ctx.clearRect(0, 0, width, height);
-          renderFrame(ctx, t, info, theme);
+          renderFrame(ctx, t, info, theme, loopDuration, renderOpts);
           const img = ctx.getImageData(0, 0, width, height);
           worker.postMessage(
             {

@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { ChevronDown } from "lucide-react";
 import type { ProfileInfo, Section } from "../lib/types";
 import { getTemplate } from "../lib/templates";
 
@@ -10,6 +11,7 @@ type Props = {
 
 export function CombinedReadme({ sections, info, filenameFor }: Props) {
   const [handle, setHandle] = useState("");
+  const [open, setOpen] = useState(false);
 
   const cleanHandle = handle.trim().replace(/^@/, "") || "USERNAME";
   const base = `https://raw.githubusercontent.com/${cleanHandle}/${cleanHandle}/main`;
@@ -38,44 +40,67 @@ export function CombinedReadme({ sections, info, filenameFor }: Props) {
   if (!sections.length) return null;
 
   return (
-    <section className="rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-5 space-y-3 min-w-0">
-      <div className="flex items-center justify-between gap-3 flex-wrap">
+    <section className="rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] overflow-hidden min-w-0">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        className="w-full px-5 py-3 flex items-center justify-between gap-3 text-left cursor-pointer hover:bg-[var(--color-surface-2)]/50 transition-colors"
+        aria-expanded={open}
+      >
         <div className="min-w-0">
           <h3 className="text-sm font-semibold text-[var(--color-text)]">
             Combined README snippet
           </h3>
-          <p className="text-[11px] text-[var(--color-text-dim)] mt-0.5">
-            Drop your downloaded files at the root of{" "}
-            <code className="font-mono">{cleanHandle}/{cleanHandle}</code> and paste this into <code className="font-mono">README.md</code>.
+          <p className="text-[11px] text-[var(--color-text-dim)] mt-0.5 truncate">
+            Markdown for your profile repo's <code className="font-mono">README.md</code>.
           </p>
         </div>
-        <input
-          value={handle}
-          onChange={(e) => setHandle(e.target.value)}
-          placeholder="github handle"
-          className="text-[11px] font-mono bg-[var(--color-surface-2)] border border-[var(--color-border)] rounded px-2 py-1 w-32 text-[var(--color-text)] placeholder:text-[var(--color-text-dim)] focus:outline-none focus:border-[var(--color-accent)]"
+        <ChevronDown
+          aria-hidden
+          size={20}
+          strokeWidth={2.25}
+          className={`text-[var(--color-text-muted)] transition-transform shrink-0 ${
+            open ? "rotate-180" : ""
+          }`}
         />
-      </div>
+      </button>
 
-      <div className="relative group min-w-0">
-        <pre className="text-[11px] font-mono leading-relaxed text-[var(--color-text-muted)] bg-[var(--color-surface-2)] rounded-md p-3 whitespace-pre-wrap break-all min-w-0 max-h-72 overflow-y-auto scrollbar-thin">
-          {snippet}
-        </pre>
-        <button
-          onClick={onCopy}
-          className="absolute top-2 right-2 text-[10px] uppercase tracking-wider px-2 py-1 rounded bg-[var(--color-surface)] border border-[var(--color-border)] text-[var(--color-text-muted)] opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity hover:text-[var(--color-text)] cursor-pointer"
-        >
-          copy
-        </button>
-      </div>
+      {open && (
+        <div className="border-t border-[var(--color-border)] p-5 space-y-3">
+          <div className="flex items-center justify-between gap-3 flex-wrap">
+            <p className="text-[11px] text-[var(--color-text-dim)] leading-relaxed min-w-0">
+              Drop your downloaded files at the root of{" "}
+              <code className="font-mono">{cleanHandle}/{cleanHandle}</code> and paste this into <code className="font-mono">README.md</code>.
+            </p>
+            <input
+              value={handle}
+              onChange={(e) => setHandle(e.target.value)}
+              placeholder="github handle"
+              className="text-[11px] font-mono bg-[var(--color-surface-2)] border border-[var(--color-border)] rounded px-2 py-1 w-32 text-[var(--color-text)] placeholder:text-[var(--color-text-dim)] focus:outline-none focus:border-[var(--color-accent)]"
+            />
+          </div>
 
-      <p className="text-[10px] text-[var(--color-text-dim)] leading-relaxed">
-        Profile READMEs live at{" "}
-        <code className="text-[var(--color-text-muted)]">
-          github.com/{cleanHandle}/{cleanHandle}
-        </code>
-        . Optionally use <code className="text-[var(--color-text-muted)]">{`${info.name ? "/assets" : "/assets"}`}</code> as a subfolder; just adjust the URL above.
-      </p>
+          <div className="relative group min-w-0">
+            <pre className="text-[11px] font-mono leading-relaxed text-[var(--color-text-muted)] bg-[var(--color-surface-2)] rounded-md p-3 whitespace-pre-wrap break-all min-w-0 max-h-72 overflow-y-auto scrollbar-thin">
+              {snippet}
+            </pre>
+            <button
+              onClick={onCopy}
+              className="absolute top-2 right-2 text-[10px] uppercase tracking-wider px-2 py-1 rounded bg-[var(--color-surface)] border border-[var(--color-border)] text-[var(--color-text-muted)] opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity hover:text-[var(--color-text)] cursor-pointer"
+            >
+              copy
+            </button>
+          </div>
+
+          <p className="text-[10px] text-[var(--color-text-dim)] leading-relaxed">
+            Profile READMEs live at{" "}
+            <code className="text-[var(--color-text-muted)]">
+              github.com/{cleanHandle}/{cleanHandle}
+            </code>
+            . Optionally use <code className="text-[var(--color-text-muted)]">{`${info.name ? "/assets" : "/assets"}`}</code> as a subfolder; just adjust the URL above.
+          </p>
+        </div>
+      )}
     </section>
   );
 }

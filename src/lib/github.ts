@@ -25,7 +25,7 @@ export async function scrapeGithub(
   });
   if (res.status === 404) throw new Error(`@${username} not found on github`);
   if (res.status === 403) {
-    throw new Error("github api rate limit hit — try again in an hour");
+    throw new Error("github api rate limit hit - try again in an hour");
   }
   if (!res.ok) throw new Error(`github api error (${res.status})`);
   const data = (await res.json()) as GithubUser;

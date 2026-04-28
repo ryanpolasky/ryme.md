@@ -1,14 +1,34 @@
-import type { Template, TemplateCategory } from "../types";
-import terminalBoot from "./terminal-boot";
-import glassBanner from "./glass-banner";
-import aboutCard from "./about-card";
-import footerWave from "./footer-wave";
+import type {
+  Template,
+  TemplateCategory,
+  TemplateFamily,
+} from "../types";
+import terminalHeader from "./terminal-boot";
+import terminalAbout from "./terminal-about";
+import terminalFooter from "./terminal-footer";
+import glassHeader from "./glass-banner";
+import glassAbout from "./glass-about";
+import glassFooter from "./glass-footer";
+import sleekHeader from "./sleek-header";
+import sleekAbout from "./about-card";
+import sleekFooter from "./footer-wave";
+import codeHeader from "./code-header";
+import codeAbout from "./code-about";
+import codeFooter from "./code-footer";
 
 export const templates: Template[] = [
-  terminalBoot,
-  glassBanner,
-  aboutCard,
-  footerWave,
+  terminalHeader,
+  terminalAbout,
+  terminalFooter,
+  glassHeader,
+  glassAbout,
+  glassFooter,
+  sleekHeader,
+  sleekAbout,
+  sleekFooter,
+  codeHeader,
+  codeAbout,
+  codeFooter,
 ];
 
 export function getTemplate(id: string): Template | undefined {
@@ -19,4 +39,28 @@ export function templatesByCategory(category: TemplateCategory): Template[] {
   return templates.filter((t) => t.category === category);
 }
 
-export { terminalBoot, glassBanner, aboutCard, footerWave };
+export function templatesByFamily(family: TemplateFamily): Template[] {
+  return templates.filter((t) => t.family === family);
+}
+
+export function templateFor(
+  family: TemplateFamily,
+  category: TemplateCategory,
+): Template | undefined {
+  return templates.find((t) => t.family === family && t.category === category);
+}
+
+export {
+  terminalHeader,
+  terminalAbout,
+  terminalFooter,
+  glassHeader,
+  glassAbout,
+  glassFooter,
+  sleekHeader,
+  sleekAbout,
+  sleekFooter,
+  codeHeader,
+  codeAbout,
+  codeFooter,
+};

@@ -2,12 +2,156 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>readme-ryvamper</title>
+
+    <title>RyMe.md - Animated banners for GitHub profile READMEs</title>
+    <meta
+      name="description"
+      content="Make animated SVG and GIF banners for your GitHub profile README. Pick a template, fill in your info, and download - all in your browser. No server, no upload, no API keys."
+    />
+    <meta
+      name="keywords"
+      content="github profile readme, github banner, animated svg, animated gif, github readme generator, profile readme banner, ryme, ryme.md, readme generator, github banner generator"
+    />
+    <meta name="author" content="Ryan Polasky" />
+    <meta name="creator" content="Ryan Polasky" />
+    <meta name="publisher" content="Ryan Polasky" />
+    <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1" />
+
+    <link rel="canonical" href="https://ryme.md/" />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="RyMe.md" />
+    <meta property="og:locale" content="en_US" />
+    <meta property="og:url" content="https://ryme.md/" />
+    <meta property="og:title" content="RyMe.md - Animated banners for GitHub profile READMEs" />
+    <meta
+      property="og:description"
+      content="Pick a template, fill in your info, and download an animated SVG or GIF for your GitHub profile README. Everything renders in the browser - no server, no upload."
+    />
+    <meta property="og:image" content="https://ryme.md/og.webp" />
+    <meta property="og:image:type" content="image/webp" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="RyMe.md preview: animated GitHub profile README banner generator with template picker." />
+
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="RyMe.md - Animated banners for GitHub profile READMEs" />
+    <meta
+      name="twitter:description"
+      content="Generate animated SVG and GIF banners for your GitHub profile README. All client-side, no server."
+    />
+    <meta name="twitter:image" content="https://ryme.md/og.webp" />
+    <meta name="twitter:image:alt" content="RyMe.md preview: animated GitHub profile README banner generator with template picker." />
+
+    <meta name="theme-color" content="#0A0A0A" />
+    <meta name="color-scheme" content="dark light" />
+    <meta name="application-name" content="RyMe.md" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="RyMe.md" />
+    <meta name="format-detection" content="telephone=no" />
+
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" type="image/png" sizes="96x96" href="/favicon-96x96.png" />
+    <link rel="icon" type="image/png" sizes="192x192" href="/favicon-192x192.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+    <link rel="manifest" href="/site.webmanifest" />
+
+    <!-- Display serif for editorial moments on the marketing page. Loaded only
+         from Google Fonts so it doesn't bulk the bundle. Falls back to the
+         system serif stack if the network is unavailable. -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&display=swap"
+    />
+
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "Person",
+          "@id": "https://ryanpolasky.com/#person",
+          "name": "Ryan Polasky",
+          "url": "https://ryanpolasky.com/",
+          "sameAs": [
+            "https://www.linkedin.com/in/ryan-polasky/",
+            "https://github.com/ryanpolasky"
+          ]
+        },
+        {
+          "@type": "WebSite",
+          "@id": "https://ryme.md/#website",
+          "url": "https://ryme.md/",
+          "name": "RyMe.md",
+          "alternateName": "readme-ryvamper",
+          "description": "Browser-based generator for animated SVG and GIF banners for GitHub profile READMEs. Entirely client-side - no server, no upload, no API keys.",
+          "inLanguage": "en",
+          "creator": { "@id": "https://ryanpolasky.com/#person" },
+          "author": { "@id": "https://ryanpolasky.com/#person" },
+          "publisher": { "@id": "https://ryanpolasky.com/#person" }
+        },
+        {
+          "@type": "WebApplication",
+          "additionalType": "https://schema.org/SoftwareApplication",
+          "@id": "https://ryme.md/#app",
+          "name": "RyMe.md",
+          "alternateName": "readme-ryvamper",
+          "url": "https://ryme.md/",
+          "description": "A browser-based generator for animated GitHub profile README banners. Pick a template, fill in your info (or pull from a public GitHub profile), and export as SVG or GIF - entirely client-side.",
+          "image": "https://ryme.md/og.webp",
+          "screenshot": "https://ryme.md/og.webp",
+          "applicationCategory": "DeveloperApplication",
+          "applicationSubCategory": "Profile README Generator",
+          "operatingSystem": "Any",
+          "browserRequirements": "Requires JavaScript and a modern browser with Web Worker and OffscreenCanvas support.",
+          "softwareVersion": "0.1",
+          "datePublished": "2026-04-28",
+          "inLanguage": "en",
+          "audience": {
+            "@type": "Audience",
+            "audienceType": "Software developers maintaining a GitHub profile README"
+          },
+          "isPartOf": { "@id": "https://ryme.md/#website" },
+          "creator": { "@id": "https://ryanpolasky.com/#person" },
+          "author": { "@id": "https://ryanpolasky.com/#person" },
+          "publisher": { "@id": "https://ryanpolasky.com/#person" },
+          "featureList": [
+            "Animated SVG export with baked-in CSS keyframes",
+            "Animated GIF export via gifenc in a Web Worker",
+            "Pixel-perfect deterministic frame export",
+            "Pull info from public GitHub profile",
+            "Multiple template categories",
+            "Per-section theme overrides",
+            "Zero server, zero upload, zero API keys"
+          ],
+          "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "USD",
+            "availability": "https://schema.org/InStock"
+          }
+        }
+      ]
+    }
+    </script>
   </head>
   <body>
-    <div id="root"></div>
+    <div id="root">
+      <noscript>
+        <h1>RyMe.md - Animated banners for GitHub profile READMEs</h1>
+        <p>
+          RyMe.md generates animated SVG and GIF banners for your GitHub
+          profile README. Pick a template, fill in your info (or pull it
+          from a public GitHub profile), and download a banner ready to
+          drop into your <code>username/username</code> repo. Everything
+          renders in the browser - no server, no upload, no API keys.
+        </p>
+        <p>This generator requires JavaScript. Please enable it to continue.</p>
+      </noscript>
+    </div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

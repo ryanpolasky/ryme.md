@@ -1,0 +1,56 @@
+# Cloudflare Pages cache + content-type rules for SEO and asset hygiene.
+# https://developers.cloudflare.com/pages/configuration/headers/
+
+# ── SPA shell: never cache stale, always revalidate.
+# Critical for SEO — without this, structured-data updates can sit in CF
+# edge caches for hours/days before crawlers see them.
+/index.html
+  Cache-Control: no-store, must-revalidate
+
+/
+  Cache-Control: no-store, must-revalidate
+
+# ── Hashed Vite asset bundles: safe to cache forever.
+/assets/*
+  Cache-Control: public, max-age=31536000, immutable
+
+# ── SEO files: 1 day, plenty for crawlers, lets you ship updates same-day.
+/sitemap.xml
+  Cache-Control: public, max-age=86400
+
+/robots.txt
+  Cache-Control: public, max-age=86400
+
+# CF Pages serves .webmanifest as application/octet-stream by default,
+# which makes browsers ignore it. Force the right MIME.
+/site.webmanifest
+  Content-Type: application/manifest+json; charset=utf-8
+  Cache-Control: public, max-age=86400
+
+# ── Images / icons: 1 week. Bumped if you start versioning these.
+/og.webp
+  Cache-Control: public, max-age=604800
+
+/favicon.svg
+  Cache-Control: public, max-age=604800
+
+/favicon-96x96.png
+  Cache-Control: public, max-age=604800
+
+/favicon-192x192.png
+  Cache-Control: public, max-age=604800
+
+/favicon-512x512.png
+  Cache-Control: public, max-age=604800
+
+/apple-touch-icon.png
+  Cache-Control: public, max-age=604800
+
+/icons.svg
+  Cache-Control: public, max-age=604800
+
+# ── Security baseline (cheap to add, helps SEO trust signals)
+/*
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin
+  Permissions-Policy: interest-cohort=()

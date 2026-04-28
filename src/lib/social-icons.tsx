@@ -43,6 +43,20 @@ export const SOCIAL_ICONS: Record<SocialKind, IconDef> = {
     viewBox: "0 0 24 24",
     paths: ["M18 6 6 18", "m6 6 12 12"],
   },
+  instagram: {
+    viewBox: "0 0 24 24",
+    paths: [
+      "M7 2 a5 5 0 0 0-5 5 v10 a5 5 0 0 0 5 5 h10 a5 5 0 0 0 5-5 v-10 a5 5 0 0 0-5-5 z",
+      "M16 11.37 A4 4 0 1 1 12.63 8 A4 4 0 0 1 16 11.37 z",
+      "M17.5 6.5 L17.51 6.5",
+    ],
+  },
+  facebook: {
+    viewBox: "0 0 24 24",
+    paths: [
+      "M18 2 h-3 a5 5 0 0 0-5 5 v3 H7 v4 h3 v8 h4 v-8 h3 l1-4 h-4 V7 a1 1 0 0 1 1-1 h3 z",
+    ],
+  },
 };
 
 // React component for use in form UI / preview chrome
@@ -115,4 +129,6 @@ export const SOCIAL_LABELS: Record<SocialKind, string> = {
   website: "Website",
   email: "Email",
   x: "X / Twitter",
+  instagram: "Instagram",
+  facebook: "Facebook",
 };

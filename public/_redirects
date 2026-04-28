@@ -1,0 +1,8 @@
+# Cloudflare Pages serves real static files BEFORE evaluating these rules,
+# so /sitemap.xml, /robots.txt, /og.webp, /site.webmanifest etc. are served
+# as themselves — no exact-match shenanigans needed (unlike nginx).
+#
+# This single line is the SPA fallback for client-side routing: any path
+# that isn't a real file gets the index.html shell with a 200 response.
+
+/*    /index.html   200

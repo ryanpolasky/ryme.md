@@ -5,34 +5,52 @@ type Props = {
   template: Template;
   info: ProfileInfo;
   theme: TemplateTheme;
+  loopDuration: number;
+  loopText: boolean;
 };
 
-export function Preview({ template, info, theme }: Props) {
+export function Preview({ template, info, theme, loopDuration, loopText }: Props) {
   return (
     <div className="rounded-xl overflow-hidden border border-[var(--color-border)] checkerboard">
       <div className="p-6 flex items-center justify-center">
         {template.kind === "svg" ? (
-          <SvgPreview template={template} info={info} theme={theme} />
+          <SvgPreview
+            template={template}
+            info={info}
+            theme={theme}
+            loopDuration={loopDuration}
+            loopText={loopText}
+          />
         ) : (
-          <CanvasPreview template={template} info={info} theme={theme} />
+          <CanvasPreview
+            template={template}
+            info={info}
+            theme={theme}
+            loopDuration={loopDuration}
+            loopText={loopText}
+          />
         )}
       </div>
     </div>
   );
 }
 
-function SvgPreview({
+export function SvgPreview({
   template,
   info,
   theme,
+  loopDuration,
+  loopText,
 }: {
   template: Extract<Template, { kind: "svg" }>;
   info: ProfileInfo;
   theme: TemplateTheme;
+  loopDuration: number;
+  loopText: boolean;
 }) {
   const svg = useMemo(
-    () => template.renderSvg(info, theme),
-    [template, info, theme],
+    () => template.renderSvg(info, theme, loopDuration, { loopText }),
+    [template, info, theme, loopDuration, loopText],
   );
   const dataUrl = useMemo(
     () => `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`,
@@ -48,22 +66,26 @@ function SvgPreview({
   );
 }
 
-function CanvasPreview({
+export function CanvasPreview({
   template,
   info,
   theme,
+  loopDuration,
+  loopText,
 }: {
   template: Extract<Template, { kind: "canvas" }>;
   info: ProfileInfo;
   theme: TemplateTheme;
+  loopDuration: number;
+  loopText: boolean;
 }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const startRef = useRef<number>(performance.now());
 
-  // Reset clock when switching templates
+  // Reset clock when switching templates or duration
   useEffect(() => {
     startRef.current = performance.now();
-  }, [template.id]);
+  }, [template.id, loopDuration]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -75,9 +97,9 @@ function CanvasPreview({
     let running = true;
     const tick = (now: number) => {
       if (!running) return;
-      const t = ((now - startRef.current) / 1000) % template.duration;
+      const t = ((now - startRef.current) / 1000) % loopDuration;
       ctx.clearRect(0, 0, template.width, template.height);
-      template.renderFrame(ctx, t, info, theme);
+      template.renderFrame(ctx, t, info, theme, loopDuration, { loopText });
       raf = requestAnimationFrame(tick);
     };
     raf = requestAnimationFrame(tick);
@@ -85,7 +107,7 @@ function CanvasPreview({
       running = false;
       cancelAnimationFrame(raf);
     };
-  }, [template, info, theme]);
+  }, [template, info, theme, loopDuration, loopText]);
 
   return (
     <canvas

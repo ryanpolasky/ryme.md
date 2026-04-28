@@ -4,230 +4,141 @@ import type {
   ProfileInfo,
   TemplateTheme,
 } from "../types";
-import { drawSocialIcon } from "../social-icons";
-
-const SANS = `"Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif`;
-const MONO = `"JetBrains Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace`;
-
-function roundRect(
-  ctx: Ctx2D,
-  x: number,
-  y: number,
-  w: number,
-  h: number,
-  r: number,
-) {
-  ctx.beginPath();
-  ctx.moveTo(x + r, y);
-  ctx.lineTo(x + w - r, y);
-  ctx.quadraticCurveTo(x + w, y, x + w, y + r);
-  ctx.lineTo(x + w, y + h - r);
-  ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
-  ctx.lineTo(x + r, y + h);
-  ctx.quadraticCurveTo(x, y + h, x, y + h - r);
-  ctx.lineTo(x, y + r);
-  ctx.quadraticCurveTo(x, y, x + r, y);
-  ctx.closePath();
-}
-
-function hexToRgb(hex: string): [number, number, number] {
-  const h = hex.replace("#", "");
-  const v =
-    h.length === 3
-      ? h
-          .split("")
-          .map((c) => c + c)
-          .join("")
-      : h;
-  const n = parseInt(v, 16);
-  return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
-}
-
-function rgba(hex: string, a: number): string {
-  const [r, g, b] = hexToRgb(hex);
-  return `rgba(${r},${g},${b},${a})`;
-}
-
-function liveSocials(info: ProfileInfo) {
-  return info.socials.filter((s) => s.value.trim());
-}
+import { SANS, fitFontSize, rgba } from "../canvas-utils";
+import {
+  drawCanvasFrame,
+  drawGlassBackground,
+  drawGlassCard,
+} from "../glass-shared";
 
 function renderFrame(
   ctx: Ctx2D,
   t: number,
   info: ProfileInfo,
   theme: TemplateTheme,
+  loopDuration: number,
 ) {
   const W = 800;
   const H = 300;
-  const DUR = 8; // seconds, must match template.duration
-  const phase = (t / DUR) * Math.PI * 2;
 
-  // 1. Solid base
-  ctx.fillStyle = theme.bg;
-  ctx.fillRect(0, 0, W, H);
+  drawGlassBackground(ctx, t, loopDuration, theme, W, H);
 
-  // 2. Mesh gradient blobs (blurred)
-  ctx.save();
-  // 'filter' is on both Canvas and OffscreenCanvas 2D contexts in modern browsers.
-  ctx.filter = "blur(60px)";
-
-  const blobs: { color: string; baseX: number; baseY: number; r: number; spd: number }[] = [
-    { color: theme.accent, baseX: W * 0.28, baseY: H * 0.55, r: 220, spd: 1 },
-    { color: "#22d3ee", baseX: W * 0.72, baseY: H * 0.45, r: 240, spd: 0.8 },
-    { color: "#f472b6", baseX: W * 0.5, baseY: H * 1.05, r: 200, spd: 1.2 },
-  ];
-  for (const b of blobs) {
-    const x = b.baseX + Math.cos(phase * b.spd) * 60;
-    const y = b.baseY + Math.sin(phase * b.spd * 0.9) * 40;
-    const grad = ctx.createRadialGradient(x, y, 0, x, y, b.r);
-    grad.addColorStop(0, rgba(b.color, 0.55));
-    grad.addColorStop(0.6, rgba(b.color, 0.18));
-    grad.addColorStop(1, rgba(b.color, 0));
-    ctx.fillStyle = grad;
-    ctx.beginPath();
-    ctx.arc(x, y, b.r, 0, Math.PI * 2);
-    ctx.fill();
-  }
-  ctx.restore();
-
-  // 3. Subtle vignette
-  const vignette = ctx.createRadialGradient(W / 2, H / 2, H * 0.4, W / 2, H / 2, H * 0.9);
-  vignette.addColorStop(0, "rgba(0,0,0,0)");
-  vignette.addColorStop(1, "rgba(0,0,0,0.45)");
-  ctx.fillStyle = vignette;
-  ctx.fillRect(0, 0, W, H);
-
-  // 4. Glass card
+  // Glass card
   const cardW = 660;
   const cardH = 200;
   const cardX = (W - cardW) / 2;
   const cardY = (H - cardH) / 2;
-  // Card shadow
-  ctx.save();
-  ctx.shadowColor = "rgba(0,0,0,0.5)";
-  ctx.shadowBlur = 30;
-  ctx.shadowOffsetY = 10;
-  ctx.fillStyle = "rgba(255,255,255,0.04)";
-  roundRect(ctx, cardX, cardY, cardW, cardH, 18);
-  ctx.fill();
-  ctx.restore();
-  // Card border
-  ctx.strokeStyle = "rgba(255,255,255,0.12)";
-  ctx.lineWidth = 1;
-  roundRect(ctx, cardX + 0.5, cardY + 0.5, cardW - 1, cardH - 1, 18);
-  ctx.stroke();
-  // Inner highlight
-  ctx.strokeStyle = "rgba(255,255,255,0.06)";
-  roundRect(ctx, cardX + 1.5, cardY + 1.5, cardW - 3, cardH - 3, 17);
-  ctx.stroke();
+  drawGlassCard(ctx, cardX, cardY, cardW, cardH, 18);
 
-  // 5. Subtle particles
-  const particleCount = 18;
-  for (let i = 0; i < particleCount; i++) {
-    const seed = i * 12.9898;
-    const baseX = ((Math.sin(seed) * 43758.5453) % 1) * W;
-    const baseY = ((Math.sin(seed * 1.7) * 12345.678) % 1) * H;
-    const px = (((baseX + 1) * 0.5) * W + Math.cos(phase + i) * 12) % W;
-    const py = (((baseY + 1) * 0.5) * H + Math.sin(phase * 0.7 + i) * 8) % H;
-    const alpha = 0.15 + 0.15 * (0.5 + 0.5 * Math.sin(phase * 1.3 + i));
-    ctx.fillStyle = rgba("#ffffff", alpha);
-    ctx.beginPath();
-    ctx.arc(px, py, 1.2, 0, Math.PI * 2);
-    ctx.fill();
-  }
+  // Build the list of lines to render so we can center them in the card
+  // regardless of which optional fields are present. Each entry carries the
+  // visual cap height above and descender below its baseline so we can
+  // compute the block's true visual extent.
+  type Line = {
+    text: string;
+    font: string;
+    fill: string;
+    cap: number;
+    desc: number;
+    gapBefore: number;
+  };
+  const lines: Line[] = [];
 
-  // 6. Text content
-  const cx = W / 2;
-  let ty = cardY + 56;
+  // Inner width budget for text inside the glass card (with side padding).
+  const TEXT_BUDGET = cardW - 64;
 
-  // Name
-  ctx.fillStyle = theme.fg;
-  ctx.font = `600 38px ${SANS}`;
-  ctx.textAlign = "center";
-  ctx.textBaseline = "alphabetic";
-  ctx.fillText(info.name || "Your Name", cx, ty);
-  ty += 8;
+  // Auto-shrink the name through 38 → 32 → 28 → 24 px. At the smallest
+  // size the helper will truncate with an ellipsis rather than overflow.
+  const nameFit = fitFontSize(
+    ctx,
+    info.name || "Your Name",
+    TEXT_BUDGET,
+    (s) => `600 ${s}px ${SANS}`,
+    [38, 32, 28, 24],
+  );
+  // Visual cap height tracks the fitted size (~0.74em for Inter-style).
+  const nameCap = Math.round(nameFit.size * 0.74);
+  const nameDesc = Math.round(nameFit.size * 0.18);
+  lines.push({
+    text: nameFit.text,
+    font: nameFit.font,
+    fill: theme.fg,
+    cap: nameCap,
+    desc: nameDesc,
+    gapBefore: 0,
+  });
 
-  // Subtitle (role · org)
   const subtitleParts = [info.role, info.org].filter(Boolean);
   if (subtitleParts.length) {
-    ty += 28;
-    ctx.fillStyle = theme.muted;
-    ctx.font = `500 15px ${SANS}`;
-    ctx.fillText(subtitleParts.join("  ·  "), cx, ty);
+    const subFit = fitFontSize(
+      ctx,
+      subtitleParts.join("  ·  "),
+      TEXT_BUDGET,
+      (s) => `500 ${s}px ${SANS}`,
+      [15, 14, 13, 12],
+    );
+    lines.push({
+      text: subFit.text,
+      font: subFit.font,
+      fill: theme.muted,
+      cap: Math.round(subFit.size * 0.74),
+      desc: Math.round(subFit.size * 0.22),
+      gapBefore: 36,
+    });
   }
-
-  // Tagline
   if (info.tagline) {
-    ty += 28;
-    ctx.fillStyle = rgba(theme.fg, 0.7);
-    ctx.font = `italic 400 13px ${SANS}`;
-    ctx.fillText(info.tagline, cx, ty);
+    const tagFit = fitFontSize(
+      ctx,
+      info.tagline,
+      TEXT_BUDGET,
+      (s) => `italic 400 ${s}px ${SANS}`,
+      [13, 12, 11],
+    );
+    lines.push({
+      text: tagFit.text,
+      font: tagFit.font,
+      fill: rgba(theme.fg, 0.7),
+      cap: Math.round(tagFit.size * 0.74),
+      desc: Math.round(tagFit.size * 0.22),
+      gapBefore: 28,
+    });
   }
 
-  // Socials — icon + value pairs, centered as a row
-  const socials = liveSocials(info);
-  if (socials.length) {
-    ty += 36;
-    const ICON = 14;
-    const ICON_GAP = 6;
-    const ENTRY_GAP = 18;
-    ctx.font = `500 11px ${MONO}`;
-    // Measure total row width
-    let total = 0;
-    const widths = socials.map((s) => ctx.measureText(s.value).width);
-    for (let i = 0; i < socials.length; i++) {
-      total += ICON + ICON_GAP + widths[i];
-      if (i < socials.length - 1) total += ENTRY_GAP;
-    }
-    let x = cx - total / 2;
-    ctx.textAlign = "left";
-    ctx.textBaseline = "middle";
-    for (let i = 0; i < socials.length; i++) {
-      drawSocialIcon(
-        ctx,
-        socials[i].kind,
-        x,
-        ty - ICON / 2,
-        ICON,
-        rgba(theme.fg, 0.85),
-        2,
-      );
-      x += ICON + ICON_GAP;
-      ctx.fillStyle = theme.muted;
-      ctx.fillText(socials[i].value, x, ty);
-      x += widths[i] + ENTRY_GAP;
-    }
-    // Reset baseline for any future drawing
-    ctx.textBaseline = "alphabetic";
-    ctx.textAlign = "center";
+  // Total block extent (top of first cap to bottom of last descender)
+  let blockH = lines[0].cap;
+  for (let i = 1; i < lines.length; i++) blockH += lines[i].gapBefore;
+  blockH += lines[lines.length - 1].desc;
+
+  const cardCenterY = cardY + cardH / 2;
+  // First baseline so the block centers vertically inside the card
+  let ty = cardCenterY - blockH / 2 + lines[0].cap;
+
+  const cx = W / 2;
+  ctx.textAlign = "center";
+  ctx.textBaseline = "alphabetic";
+  for (let i = 0; i < lines.length; i++) {
+    if (i > 0) ty += lines[i].gapBefore;
+    ctx.font = lines[i].font;
+    ctx.fillStyle = lines[i].fill;
+    ctx.fillText(lines[i].text, cx, ty);
   }
 
-  // 7. Outer canvas border (rounded)
-  ctx.strokeStyle = "rgba(255,255,255,0.05)";
-  ctx.lineWidth = 1;
-  roundRect(ctx, 0.5, 0.5, W - 1, H - 1, 14);
-  ctx.stroke();
+  drawCanvasFrame(ctx, W, H, 14);
 }
 
 const template: CanvasTemplate = {
-  id: "glass-banner",
+  id: "glass-header",
   name: "Glass Banner",
   description:
-    "Animated mesh gradient drifting behind a glassmorphic card. Soft, designed, low-energy. Renders to GIF.",
+    "Animated mesh gradient drifting behind a glassmorphic card. Renders to GIF.",
   kind: "canvas",
   category: "header",
+  family: "glass",
   width: 800,
   height: 300,
   fps: 24,
   duration: 8,
-  defaultTheme: {
-    bg: "#0b0b12",
-    fg: "#f7f7fb",
-    accent: "#7c3aed",
-    muted: "#a5a5b3",
-  },
+  fields: ["name", "role", "org", "tagline"],
   renderFrame,
 };
 

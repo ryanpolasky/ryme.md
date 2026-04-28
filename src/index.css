@@ -3,6 +3,8 @@
 @theme {
   --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  --font-display: "Instrument Serif", "Cormorant Garamond", "Iowan Old Style",
+    "Apple Garamond", "Baskerville", "Times New Roman", serif;
 
   --color-bg: #0a0a0b;
   --color-surface: #111114;
@@ -12,12 +14,27 @@
   --color-text: #e7e7ea;
   --color-text-muted: #8b8b94;
   --color-text-dim: #5a5a64;
-  --color-accent: #7c3aed;
-  --color-accent-soft: rgba(124, 58, 237, 0.15);
+  --color-accent: #ef4444;
+  --color-accent-soft: rgba(239, 68, 68, 0.13);
+  --color-accent-strong: #dc2626;
   --color-success: #4ade80;
 }
 
 @layer base {
+  html {
+    /* Smooth-scroll anchor links (e.g. #showcase, #features on the home page).
+       The scroll-padding-top accounts for the sticky navbar so target
+       headings don't tuck under it. */
+    scroll-behavior: smooth;
+    scroll-padding-top: 80px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    html {
+      scroll-behavior: auto;
+    }
+  }
+
   html, body, #root {
     height: 100%;
     background: var(--color-bg);
@@ -37,13 +54,34 @@
     color: var(--color-text);
   }
 
-  /* Hide scrollbar chrome but keep scroll */
+  /* Thin scrollbar (visible always) */
   .scrollbar-thin::-webkit-scrollbar { width: 6px; height: 6px; }
   .scrollbar-thin::-webkit-scrollbar-thumb {
     background: var(--color-border-strong);
     border-radius: 999px;
   }
   .scrollbar-thin::-webkit-scrollbar-track { background: transparent; }
+
+  /* Auto-hide scrollbar: invisible until hover/scroll, mac-style */
+  .scrollbar-auto {
+    scrollbar-width: thin;
+    scrollbar-color: transparent transparent;
+    transition: scrollbar-color 200ms ease;
+  }
+  .scrollbar-auto::-webkit-scrollbar { width: 6px; height: 6px; }
+  .scrollbar-auto::-webkit-scrollbar-track { background: transparent; }
+  .scrollbar-auto::-webkit-scrollbar-thumb {
+    background: transparent;
+    border-radius: 999px;
+    transition: background 200ms ease;
+  }
+  .scrollbar-auto:hover, .scrollbar-auto:focus-within {
+    scrollbar-color: var(--color-border-strong) transparent;
+  }
+  .scrollbar-auto:hover::-webkit-scrollbar-thumb,
+  .scrollbar-auto:focus-within::-webkit-scrollbar-thumb {
+    background: var(--color-border-strong);
+  }
 }
 
 @layer utilities {
@@ -56,5 +94,30 @@
     background-size: 16px 16px;
     background-position: 0 0, 0 8px, 8px -8px, -8px 0;
     background-color: #0d0d10;
+  }
+
+  /* Page-load reveal used by the home page hero. Plays once on first paint;
+     respects reduced-motion. The animation-delay is set inline per element
+     so the same class can stagger across multiple targets. */
+  @keyframes fade-up {
+    from {
+      opacity: 0;
+      transform: translateY(14px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  .fade-up {
+    opacity: 0;
+    animation: fade-up 800ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .fade-up {
+      opacity: 1;
+      transform: none;
+      animation: none;
+    }
   }
 }
