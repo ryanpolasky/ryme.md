@@ -9,8 +9,9 @@ const escapeXml = (s: string) =>
     .replace(/'/g, "&apos;");
 
 function socialsLine(info: ProfileInfo): string {
-  if (!info.socials.length) return "—";
-  return info.socials.map((s) => s.kind).join(" · ");
+  const live = info.socials.filter((s) => s.value.trim());
+  if (!live.length) return "—";
+  return live.map((s) => s.kind).join(" · ");
 }
 
 function buildLines(info: ProfileInfo): { label: string; value: string }[] {
@@ -127,6 +128,7 @@ const template: SvgTemplate = {
   description:
     "Mac-window terminal that reveals your identity field by field, then waits at a blinking prompt. Pure animated SVG, ships as a tiny file.",
   kind: "svg",
+  category: "header",
   width: 800,
   height: 300,
   duration: 6,

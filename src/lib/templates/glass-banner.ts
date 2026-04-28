@@ -4,6 +4,7 @@ import type {
   ProfileInfo,
   TemplateTheme,
 } from "../types";
+import { drawSocialIcon } from "../social-icons";
 
 const SANS = `"Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif`;
 const MONO = `"JetBrains Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace`;
@@ -47,9 +48,8 @@ function rgba(hex: string, a: number): string {
   return `rgba(${r},${g},${b},${a})`;
 }
 
-function socialsLine(info: ProfileInfo): string {
-  if (!info.socials.length) return "";
-  return info.socials.map((s) => s.value).join("    ");
+function liveSocials(info: ProfileInfo) {
+  return info.socials.filter((s) => s.value.trim());
 }
 
 function renderFrame(
@@ -166,13 +166,42 @@ function renderFrame(
     ctx.fillText(info.tagline, cx, ty);
   }
 
-  // Socials
-  const socials = socialsLine(info);
-  if (socials) {
-    ty += 38;
-    ctx.fillStyle = theme.muted;
+  // Socials — icon + value pairs, centered as a row
+  const socials = liveSocials(info);
+  if (socials.length) {
+    ty += 36;
+    const ICON = 14;
+    const ICON_GAP = 6;
+    const ENTRY_GAP = 18;
     ctx.font = `500 11px ${MONO}`;
-    ctx.fillText(socials, cx, ty);
+    // Measure total row width
+    let total = 0;
+    const widths = socials.map((s) => ctx.measureText(s.value).width);
+    for (let i = 0; i < socials.length; i++) {
+      total += ICON + ICON_GAP + widths[i];
+      if (i < socials.length - 1) total += ENTRY_GAP;
+    }
+    let x = cx - total / 2;
+    ctx.textAlign = "left";
+    ctx.textBaseline = "middle";
+    for (let i = 0; i < socials.length; i++) {
+      drawSocialIcon(
+        ctx,
+        socials[i].kind,
+        x,
+        ty - ICON / 2,
+        ICON,
+        rgba(theme.fg, 0.85),
+        2,
+      );
+      x += ICON + ICON_GAP;
+      ctx.fillStyle = theme.muted;
+      ctx.fillText(socials[i].value, x, ty);
+      x += widths[i] + ENTRY_GAP;
+    }
+    // Reset baseline for any future drawing
+    ctx.textBaseline = "alphabetic";
+    ctx.textAlign = "center";
   }
 
   // 7. Outer canvas border (rounded)
@@ -188,6 +217,7 @@ const template: CanvasTemplate = {
   description:
     "Animated mesh gradient drifting behind a glassmorphic card. Soft, designed, low-energy. Renders to GIF.",
   kind: "canvas",
+  category: "header",
   width: 800,
   height: 300,
   fps: 24,
