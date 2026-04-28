@@ -1,8 +1,16 @@
-# Cloudflare Pages serves real static files BEFORE evaluating these rules,
+# Cloudflare Pages serves real static files BEFORE evaluating any rules,
 # so /sitemap.xml, /robots.txt, /og.webp, /site.webmanifest etc. are served
 # as themselves — no exact-match shenanigans needed (unlike nginx).
 #
-# This single line is the SPA fallback for client-side routing: any path
-# that isn't a real file gets the index.html shell with a 200 response.
-
-/*    /index.html   200
+# SPA fallback for client-side routes (`/editor`, etc.) is handled
+# natively by Cloudflare Pages when the Vite framework preset is detected:
+# any path without a matching file gets `/index.html` with a 200 response.
+#
+# We intentionally do NOT include `/* /index.html 200` here — Cloudflare's
+# `_redirects` parser flags it as an infinite loop (because their `.html`
+# auto-stripper rewrites `/index.html` → `/index` → matches `/*` → loop)
+# and ignores the rule, leaving us reliant on the auto-fallback anyway.
+#
+# If the auto-fallback ever stops working, the recovery is a tiny Pages
+# Function at `functions/[[catchall]].ts` that re-fetches `/index.html`
+# for non-asset 404s. We don't need that yet.
