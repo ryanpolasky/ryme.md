@@ -147,14 +147,17 @@ function renderFrame(
     }
     const PILL_PAD = Math.max(8, Math.round(pillSize * 0.85));
     const PILL_HEIGHT = Math.max(18, Math.round(pillSize * 1.83));
-    // At the chosen size, still cap each pill to 45% of innerW so a single
-    // overlong pill doesn't dominate. fitUniformFontSize at this fixed size
-    // truncates only the outliers.
+    // At the chosen size, cap each pill by the per-row budget derived from
+    // the number of pills so the whole row remains inside innerW.
+    const perPillCap = Math.max(
+      80,
+      Math.floor((innerW - (pills.length - 1) * PILL_GAP) / pills.length),
+    );
     ctx.font = `500 ${pillSize}px ${MONO}`;
     const pillFit = fitUniformFontSize(
       ctx,
       pills,
-      Math.floor(innerW * 0.45),
+      perPillCap,
       (s) => `500 ${s}px ${MONO}`,
       [pillSize],
     );

@@ -64,11 +64,18 @@ function renderSvg(
   // get visually noisy when long.
   const metaFit = fitFontSize(
     meta.join("   ·   "),
-    NAME_BUDGET,
-    [13, 12, 11],
+    NAME_BUDGET - 48,
+    [13, 12, 11, 10],
     "sans",
   );
-  const metaLine = metaFit.text;
+  const metaCharBudget = Math.max(
+    12,
+    Math.floor((NAME_BUDGET - 48) / (metaFit.size * 0.62)),
+  );
+  const metaLine =
+    metaFit.text.length > metaCharBudget
+      ? `${metaFit.text.slice(0, Math.max(1, metaCharBudget - 1)).trimEnd()}…`
+      : metaFit.text;
   const metaSize = metaFit.size;
 
   // When loopText is off, render everything statically so the SVG looks

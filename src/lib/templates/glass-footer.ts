@@ -42,19 +42,23 @@ function renderFrame(
   // Sign-off line. Auto-shrink the entire composite line through 14 → 13 → 12
   // px so long taglines stay inside the card without ellipsing.
   const name = info.name || "you";
-  const right = ` by ${name}${info.tagline ? ` - ${info.tagline}` : ""}`;
-  const left = "made with ";
-  const heart = "♥";
+  const fullSignoff = `made with ♥ by ${name}${info.tagline ? ` - ${info.tagline}` : ""}`;
   const SIGNOFF_BUDGET = cardW - 48;
   const signoffFit = fitFontSize(
     ctx,
-    `${left}${heart}${right}`,
+    fullSignoff,
     SIGNOFF_BUDGET,
     (s) => `500 ${s}px ${SANS}`,
     [14, 13, 12],
   );
   const signoffSize = signoffFit.size;
+  const signoffText = signoffFit.text;
   ctx.font = `500 ${signoffSize}px ${SANS}`;
+  const left = "made with ";
+  const heart = "♥";
+  const right = signoffText.startsWith(`${left}${heart}`)
+    ? signoffText.slice(`${left}${heart}`.length)
+    : signoffText;
   const lw = ctx.measureText(left).width;
   const hw = ctx.measureText(heart).width;
   const rw = ctx.measureText(right).width;
@@ -62,6 +66,14 @@ function renderFrame(
   const startX = cx - total / 2;
 
   const socials = liveSocials(info);
+  const SOCIAL_MAX_CHARS = 42;
+  const shownSocials = socials.map((s) => ({
+    ...s,
+    value:
+      s.value.length > SOCIAL_MAX_CHARS
+        ? s.value.slice(0, SOCIAL_MAX_CHARS - 1) + "…"
+        : s.value,
+  }));
 
   // Group signoff + socials, center the group vertically in the card.
   // Signoff cap/descender scale with the fitted size (~0.71em / 0.21em).
@@ -76,7 +88,7 @@ function renderFrame(
 
   // Pre-measure socials values to decide single vs two-row layout.
   ctx.font = `500 11px ${MONO}`;
-  const widths = socials.map((s) => ctx.measureText(s.value).width);
+  const widths = shownSocials.map((s) => ctx.measureText(s.value).width);
   const entryWidths = widths.map((w) => ICON + ICON_GAP + w);
   const measureRow = (idxs: number[]): number => {
     if (idxs.length === 0) return 0;
@@ -85,13 +97,13 @@ function renderFrame(
       (idxs.length - 1) * ENTRY_GAP
     );
   };
-  const allIdx = socials.map((_, i) => i);
+  const allIdx = shownSocials.map((_, i) => i);
   const singleRowW = measureRow(allIdx);
-  const wrapSocials = socials.length > 1 && singleRowW > MAX_ROW_W;
-  const topCount = wrapSocials ? Math.ceil(socials.length / 2) : socials.length;
+  const wrapSocials = shownSocials.length > 1 && singleRowW > MAX_ROW_W;
+  const topCount = wrapSocials ? Math.ceil(shownSocials.length / 2) : shownSocials.length;
   const rowsIdxs: number[][] = wrapSocials
     ? [allIdx.slice(0, topCount), allIdx.slice(topCount)]
-    : socials.length
+    : shownSocials.length
       ? [allIdx]
       : [];
 
@@ -124,10 +136,10 @@ function renderFrame(
       let sx = cx - rowW / 2;
       const sy = firstRowCenter + rowI * (ICON + ROW_GAP);
       for (const i of rowIdxs) {
-        drawSocialIcon(ctx, socials[i].kind, sx, sy - ICON / 2, ICON, rgba(theme.fg, 0.85), 2);
+        drawSocialIcon(ctx, shownSocials[i].kind, sx, sy - ICON / 2, ICON, rgba(theme.fg, 0.85), 2);
         sx += ICON + ICON_GAP;
         ctx.fillStyle = rgba(theme.fg, 0.65);
-        ctx.fillText(socials[i].value, sx, sy);
+        ctx.fillText(shownSocials[i].value, sx, sy);
         sx += widths[i] + ENTRY_GAP;
       }
     });

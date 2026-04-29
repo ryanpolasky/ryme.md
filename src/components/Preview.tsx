@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef } from "react";
 import type { ProfileInfo, Template, TemplateTheme } from "../lib/types";
+import { cleanInfo } from "../lib/info-utils";
 
 type Props = {
   template: Template;
@@ -48,9 +49,12 @@ export function SvgPreview({
   loopDuration: number;
   loopText: boolean;
 }) {
+  // Clean at the render boundary -- form state still holds the raw user
+  // text, but the SVG only sees normalized values.
+  const cleaned = useMemo(() => cleanInfo(info), [info]);
   const svg = useMemo(
-    () => template.renderSvg(info, theme, loopDuration, { loopText }),
-    [template, info, theme, loopDuration, loopText],
+    () => template.renderSvg(cleaned, theme, loopDuration, { loopText }),
+    [template, cleaned, theme, loopDuration, loopText],
   );
   const dataUrl = useMemo(
     () => `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`,
@@ -82,6 +86,9 @@ export function CanvasPreview({
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const startRef = useRef<number>(performance.now());
 
+  // Same boundary-cleaning treatment as the SVG path.
+  const cleaned = useMemo(() => cleanInfo(info), [info]);
+
   // Reset clock when switching templates or duration
   useEffect(() => {
     startRef.current = performance.now();
@@ -99,7 +106,7 @@ export function CanvasPreview({
       if (!running) return;
       const t = ((now - startRef.current) / 1000) % loopDuration;
       ctx.clearRect(0, 0, template.width, template.height);
-      template.renderFrame(ctx, t, info, theme, loopDuration, { loopText });
+      template.renderFrame(ctx, t, cleaned, theme, loopDuration, { loopText });
       raf = requestAnimationFrame(tick);
     };
     raf = requestAnimationFrame(tick);
@@ -107,7 +114,7 @@ export function CanvasPreview({
       running = false;
       cancelAnimationFrame(raf);
     };
-  }, [template, info, theme, loopDuration, loopText]);
+  }, [template, cleaned, theme, loopDuration, loopText]);
 
   return (
     <canvas

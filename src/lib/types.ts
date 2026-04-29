@@ -72,7 +72,13 @@ export const CATEGORY_ORDER: TemplateCategory[] = [
   "footer",
 ];
 
-export type TemplateFamily = "terminal" | "glass" | "sleek" | "code";
+export type TemplateFamily =
+  | "terminal"
+  | "glass"
+  | "sleek"
+  | "code"
+  | "neon"
+  | "blueprint";
 
 export const FAMILY_META: Record<
   TemplateFamily,
@@ -94,6 +100,14 @@ export const FAMILY_META: Record<
     label: "Code",
     hint: "VS Code window with syntax highlighting and a typing cursor. Pure SVG.",
   },
+  neon: {
+    label: "Neon",
+    hint: "Synthwave cyberpunk - magenta/cyan glow, scanlines, perspective grid. Pure SVG.",
+  },
+  blueprint: {
+    label: "Blueprint",
+    hint: "Engineering drawing - cyanotype paper, dimension lines, title block, approval stamp. Pure SVG.",
+  },
 };
 
 export const FAMILY_ORDER: TemplateFamily[] = [
@@ -101,6 +115,8 @@ export const FAMILY_ORDER: TemplateFamily[] = [
   "glass",
   "sleek",
   "code",
+  "neon",
+  "blueprint",
 ];
 
 export const FAMILY_DEFAULT_THEME: Record<TemplateFamily, TemplateTheme> = {
@@ -128,6 +144,23 @@ export const FAMILY_DEFAULT_THEME: Record<TemplateFamily, TemplateTheme> = {
     fg: "#d4d4d4",
     accent: "#569cd6",
     muted: "#6a737d",
+  },
+  neon: {
+    // Synthwave palette: deep purple-black ground, soft pink fg for legibility
+    // through the bloom, hot magenta primary glow, cyan secondary glow.
+    bg: "#0a0118",
+    fg: "#fde7ff",
+    accent: "#ff2bd6",
+    muted: "#22d3ee",
+  },
+  blueprint: {
+    // Cyanotype paper: rich blueprint blue ground, paper-cream fg for body
+    // text, pure white for high-emphasis dimension/leader lines, faded cyan
+    // for grid + table rules + secondary annotations.
+    bg: "#0e3a6e",
+    fg: "#f1ece1",
+    accent: "#ffffff",
+    muted: "#7d9fc4",
   },
 };
 

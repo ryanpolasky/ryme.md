@@ -15,6 +15,12 @@ import sleekFooter from "./footer-wave";
 import codeHeader from "./code-header";
 import codeAbout from "./code-about";
 import codeFooter from "./code-footer";
+import neonHeader from "./neon-header";
+import neonAbout from "./neon-about";
+import neonFooter from "./neon-footer";
+import blueprintHeader from "./blueprint-header";
+import blueprintAbout from "./blueprint-about";
+import blueprintFooter from "./blueprint-footer";
 
 export const templates: Template[] = [
   terminalHeader,
@@ -29,6 +35,12 @@ export const templates: Template[] = [
   codeHeader,
   codeAbout,
   codeFooter,
+  neonHeader,
+  neonAbout,
+  neonFooter,
+  blueprintHeader,
+  blueprintAbout,
+  blueprintFooter,
 ];
 
 export function getTemplate(id: string): Template | undefined {
@@ -63,4 +75,10 @@ export {
   codeHeader,
   codeAbout,
   codeFooter,
+  neonHeader,
+  neonAbout,
+  neonFooter,
+  blueprintHeader,
+  blueprintAbout,
+  blueprintFooter,
 };

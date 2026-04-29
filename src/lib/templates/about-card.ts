@@ -128,11 +128,17 @@ function renderSvg(
   const PILL_CHAR_PX = pillSize * 0.6;
   const PILL_PAD_X = Math.max(8, Math.round(pillSize * 1.0));
   // At the smallest size pills can still overflow if any single pill text is
-  // huge - in that case truncate uniformly at this size. fitUniformFontSize
-  // emits the same size for all + truncates outliers.
+  // huge. Cap each pill by the per-row budget derived from the current number
+  // of pills so the full row always fits inside INNER_W.
+  const perPillCap = pills.length
+    ? Math.max(
+        80,
+        Math.floor((INNER_W - (pills.length - 1) * PILL_GAP) / pills.length),
+      )
+    : Math.floor(INNER_W * 0.55);
   const pillFit = fitUniformFontSize(
     pills,
-    Math.floor(INNER_W * 0.55), // per-pill cap so one overlong pill doesn't dominate
+    perPillCap,
     [pillSize],
     "mono",
   );

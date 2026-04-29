@@ -36,9 +36,17 @@ function renderSvg(
   // Cap at 4 socials so the output panel doesn't grow past the footer height.
   // Anything beyond gets dropped silently (most users have 2-3 anyway).
   const SOCIAL_LIMIT = 4;
+  const SOCIAL_MAX_CHARS = 56;
   const socials = info.socials
     .filter((s) => s.value.trim())
-    .slice(0, SOCIAL_LIMIT);
+    .slice(0, SOCIAL_LIMIT)
+    .map((s) => ({
+      ...s,
+      value:
+        s.value.length > SOCIAL_MAX_CHARS
+          ? s.value.slice(0, SOCIAL_MAX_CHARS - 1) + "…"
+          : s.value,
+    }));
   const name = info.name || "you";
 
   // Body where output lines render. Status bar sits at the bottom; panel

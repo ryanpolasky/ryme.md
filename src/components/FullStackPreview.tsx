@@ -9,6 +9,7 @@ import {
 } from "../lib/types";
 import { getTemplate } from "../lib/templates";
 import { encodeGif } from "../lib/encoder/encode";
+import { cleanInfo } from "../lib/info-utils";
 import { CanvasPreview, SvgPreview } from "./Preview";
 import { Button } from "./ui";
 
@@ -51,6 +52,9 @@ export function FullStackPreview({
     setZipMsg(`0 / ${sections.length}`);
     try {
       const zip = new JSZip();
+      // Clean once for the entire batch -- every section in the zip ends up
+      // with the same normalized profile data.
+      const renderInfo = cleanInfo(info);
       let done = 0;
       for (const section of sections) {
         const template = getTemplate(section.templateId);
@@ -60,13 +64,13 @@ export function FullStackPreview({
         const base = filenameFor(section);
 
         if (template.kind === "svg") {
-          const svg = template.renderSvg(info, theme, loopDuration, { loopText });
+          const svg = template.renderSvg(renderInfo, theme, loopDuration, { loopText });
           zip.file(`${base}.svg`, svg);
         } else {
           setZipMsg(`Encoding ${base}.gif (${done + 1}/${sections.length})`);
           const blob = await encodeGif({
             template,
-            info,
+            info: renderInfo,
             theme,
             loopDuration,
             loopText,

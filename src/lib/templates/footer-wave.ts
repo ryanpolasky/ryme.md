@@ -64,7 +64,19 @@ function renderSvg(
     [14, 13, 12],
     "sans",
   );
+  const signoffText = signoffFit.text;
   const signoffSize = signoffFit.size;
+
+  // Clamp social values before row layout so extreme URLs/handles don't force
+  // rows beyond the available width.
+  const SOCIAL_MAX_CHARS = 42;
+  const shownSocials = socials.map((s) => ({
+    ...s,
+    value:
+      s.value.length > SOCIAL_MAX_CHARS
+        ? s.value.slice(0, SOCIAL_MAX_CHARS - 1) + "…"
+        : s.value,
+  }));
 
   // Wave geometry: continuous sine, two layered phases.
   const PERIOD = 160;
@@ -105,12 +117,12 @@ function renderSvg(
   const ROW_GAP = 8;
   const MAX_ROW_W = W - 80;
 
-  const entryWidths = socials.map(
+  const entryWidths = shownSocials.map(
     (s) => ICON + ICON_GAP + Math.round(s.value.length * 7.2),
   );
 
-  // Decide whether to wrap into two rows. If the single-row width exceeds
-  // MAX_ROW_W, split with the larger half on top (per spec).
+  // Row packing: greedily place entries into rows bounded by MAX_ROW_W.
+  // This handles arbitrary social counts and long values without clipping.
   function rowWidth(idxs: number[]): number {
     if (idxs.length === 0) return 0;
     return (
@@ -118,15 +130,26 @@ function renderSvg(
       (idxs.length - 1) * ENTRY_GAP
     );
   }
-  const singleRowIdx = socials.map((_, i) => i);
-  const singleRowW = rowWidth(singleRowIdx);
-  const wrap = socials.length > 1 && singleRowW > MAX_ROW_W;
-  const topCount = wrap ? Math.ceil(socials.length / 2) : socials.length;
-  const rowsIdxs: number[][] = wrap
-    ? [singleRowIdx.slice(0, topCount), singleRowIdx.slice(topCount)]
-    : socials.length
-      ? [singleRowIdx]
-      : [];
+  const rowsIdxs: number[][] = [];
+  if (shownSocials.length) {
+    let cur: number[] = [];
+    let curW = 0;
+    shownSocials.forEach((_, i) => {
+      const nextW =
+        cur.length === 0
+          ? entryWidths[i]
+          : curW + ENTRY_GAP + entryWidths[i];
+      if (cur.length > 0 && nextW > MAX_ROW_W) {
+        rowsIdxs.push(cur);
+        cur = [i];
+        curW = entryWidths[i];
+      } else {
+        cur.push(i);
+        curW = nextW;
+      }
+    });
+    if (cur.length) rowsIdxs.push(cur);
+  }
 
   // Group height accounts for the actual number of socials rows.
   const socialsBlockH = rowsIdxs.length
@@ -147,7 +170,7 @@ function renderSvg(
       const rowY = firstRowCenter + rowI * (ICON + ROW_GAP);
       return rowIdxs
         .map((i) => {
-          const s = socials[i];
+          const s = shownSocials[i];
           const xStart = socX;
           socX += entryWidths[i] + ENTRY_GAP;
           return `<g transform="translate(${xStart} ${rowY})">
@@ -169,7 +192,7 @@ function renderSvg(
     ? `
     .signoff { animation: signoffIn ${DUR} ease-in-out infinite; }
     .soc { animation: socfade ${DUR} ease-in-out infinite; }
-    ${socials.map((_, i) => `.sf${i} { animation-delay: ${(0.6 + i * 0.08).toFixed(2)}s }`).join("\n    ")}
+    ${shownSocials.map((_, i) => `.sf${i} { animation-delay: ${(0.6 + i * 0.08).toFixed(2)}s }`).join("\n    ")}
 
     @keyframes signoffIn {
       0%, 8% { opacity: 0; transform: translateY(4px); }
@@ -247,7 +270,7 @@ function renderSvg(
   </g>
 
   <!-- Sign-off line -->
-  <text class="signoff" x="${cx}" y="${signoffY}" text-anchor="middle" fill="${theme.fg}" font-family='"Inter", system-ui, sans-serif' font-size="${signoffSize}" font-weight="500">made with <tspan class="heart" fill="${theme.accent}">♥</tspan> by ${escapeXml(name)}${escapeXml(tag)}</text>
+  <text class="signoff" x="${cx}" y="${signoffY}" text-anchor="middle" fill="${theme.fg}" font-family='"Inter", system-ui, sans-serif' font-size="${signoffSize}" font-weight="500">${escapeXml(signoffText).replace("♥", `<tspan class="heart" fill="${theme.accent}">♥</tspan>`)}</text>
 
   ${socialsSvg}
 </svg>`;

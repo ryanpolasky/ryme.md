@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { ChevronDown } from "lucide-react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { ChevronDown, ChevronLeft, ChevronRight } from "lucide-react";
 import {
   FAMILY_DEFAULT_THEME,
   FAMILY_META,
@@ -21,10 +21,14 @@ type Props = {
   onLoopTextChange: (next: boolean) => void;
 };
 
-// Families whose templates have text-fade animations that benefit from the
-// loop toggle. Glass templates render text statically (only the bg animates),
-// so the toggle would be a no-op there and is hidden.
-const FAMILIES_WITH_TEXT_LOOP: TemplateFamily[] = ["terminal", "sleek", "code"];
+// Show the loop toggle only for families where text itself fully disappears
+// and reappears over the cycle. Families with always-visible text (glass,
+// neon, blueprint) keep ambient/decorative motion but don't need this control.
+const FAMILIES_WITH_TEXT_LOOP: TemplateFamily[] = [
+  "terminal",
+  "sleek",
+  "code",
+];
 
 const themeKeys: (keyof TemplateTheme)[] = ["bg", "fg", "accent", "muted"];
 
@@ -48,6 +52,65 @@ export function GlobalControls({
   const effective: TemplateTheme = { ...familyDefault, ...globalTheme };
   const isDirty = themeKeys.some((k) => globalTheme[k] !== undefined);
   const showLoopToggle = FAMILIES_WITH_TEXT_LOOP.includes(family);
+
+  // Keep the active family slot visible inside its scroll container.
+  // Manual scrollLeft math (instead of scrollIntoView) so we never
+  // accidentally scroll the page when the editor sidebar is sticky.
+  const familyRowRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const row = familyRowRef.current;
+    if (!row) return;
+    const btn = row.querySelector<HTMLElement>(`[data-family="${family}"]`);
+    if (!btn) return;
+    const pad = 12;
+    const left = btn.offsetLeft;
+    const right = left + btn.offsetWidth;
+    const viewL = row.scrollLeft;
+    const viewR = viewL + row.clientWidth;
+    if (left < viewL + pad) {
+      row.scrollTo({ left: Math.max(0, left - pad), behavior: "smooth" });
+    } else if (right > viewR - pad) {
+      row.scrollTo({
+        left: right - row.clientWidth + pad,
+        behavior: "smooth",
+      });
+    }
+  }, [family]);
+
+  // Scroll-arrow visibility tracks whether more content exists past either
+  // edge. Updated on scroll, resize, and family-list changes so the arrows
+  // hide cleanly at the boundaries.
+  const [canScrollL, setCanScrollL] = useState(false);
+  const [canScrollR, setCanScrollR] = useState(false);
+  const updateScrollState = useCallback(() => {
+    const row = familyRowRef.current;
+    if (!row) return;
+    // 1px slop covers sub-pixel rounding (Safari, zoomed Chrome).
+    setCanScrollL(row.scrollLeft > 1);
+    setCanScrollR(row.scrollLeft + row.clientWidth < row.scrollWidth - 1);
+  }, []);
+  useEffect(() => {
+    if (!open) return;
+    updateScrollState();
+    const row = familyRowRef.current;
+    if (!row) return;
+    const ro = new ResizeObserver(updateScrollState);
+    ro.observe(row);
+    return () => ro.disconnect();
+  }, [open, updateScrollState]);
+  // Re-run after the active-slot scroll-into-view effect settles, so the
+  // arrows reflect the new scroll position (smooth scroll resolves async).
+  useEffect(() => {
+    const id = window.setTimeout(updateScrollState, 350);
+    return () => window.clearTimeout(id);
+  }, [family, updateScrollState]);
+
+  const scrollByDir = (dir: -1 | 1) => {
+    const row = familyRowRef.current;
+    if (!row) return;
+    // ~one slot + gap so a click advances by exactly one family.
+    row.scrollBy({ left: dir * 120, behavior: "smooth" });
+  };
 
   return (
     <section className="rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] overflow-hidden min-w-0">
@@ -88,40 +151,90 @@ export function GlobalControls({
 
       {open && (
         <div className="border-t border-[var(--color-border)] p-5 space-y-5">
-          {/* Family picker - segmented, no descriptions */}
+          {/* Family picker - segmented row that scrolls horizontally so each
+              slot can keep a comfortable label width as more families are
+              added. Edge chevrons fade in when more content sits past the
+              boundary so the affordance reads at a glance. */}
           <div>
             <p className="text-[11px] uppercase tracking-[0.08em] font-medium text-[var(--color-text-muted)] mb-2">
               Style
             </p>
-            <div
-              className="grid gap-1.5 p-1 rounded-lg bg-[var(--color-surface-2)] border border-[var(--color-border)]"
-              style={{
-                gridTemplateColumns: `repeat(${FAMILY_ORDER.length}, minmax(0,1fr))`,
-              }}
-            >
-              {FAMILY_ORDER.map((f) => {
-                const meta = FAMILY_META[f];
-                const active = f === family;
-                return (
-                  <button
-                    key={f}
-                    onClick={() => onFamilyChange(f)}
-                    className={`px-3 py-2 rounded-md border transition-all cursor-pointer min-w-0 flex items-center justify-center gap-2 ${
-                      active
-                        ? "border-[var(--color-accent)] bg-[var(--color-accent-soft)]"
-                        : "border-transparent hover:bg-[var(--color-surface)]"
-                    }`}
-                  >
-                    <span
-                      className="size-3 rounded-full ring-1 ring-white/10 shrink-0"
-                      style={{ background: FAMILY_DEFAULT_THEME[f].accent }}
-                    />
-                    <span className="text-sm font-semibold text-[var(--color-text)]">
-                      {meta.label}
-                    </span>
-                  </button>
-                );
-              })}
+            <div className="relative">
+              <div
+                ref={familyRowRef}
+                onScroll={updateScrollState}
+                className="flex gap-1.5 p-1 rounded-lg bg-[var(--color-surface-2)] border border-[var(--color-border)] overflow-x-auto scrollbar-thin snap-x snap-mandatory scroll-px-1"
+              >
+                {FAMILY_ORDER.map((f) => {
+                  const meta = FAMILY_META[f];
+                  const active = f === family;
+                  return (
+                    <button
+                      key={f}
+                      data-family={f}
+                      onClick={() => onFamilyChange(f)}
+                      className={`px-3 py-2 rounded-md border transition-all cursor-pointer flex items-center justify-center gap-2 shrink-0 snap-start min-w-[7rem] ${
+                        active
+                          ? "border-[var(--color-accent)] bg-[var(--color-accent-soft)]"
+                          : "border-transparent hover:bg-[var(--color-surface)]"
+                      }`}
+                    >
+                      <span
+                        className="size-3 rounded-full ring-1 ring-white/10 shrink-0"
+                        style={{ background: FAMILY_DEFAULT_THEME[f].accent }}
+                      />
+                      <span className="text-sm font-semibold text-[var(--color-text)]">
+                        {meta.label}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+              {/* Left edge: gradient scrim + chevron. Inset by 1px so the
+                  parent border stays visible underneath. */}
+              <button
+                type="button"
+                onClick={() => scrollByDir(-1)}
+                aria-label="Scroll styles left"
+                aria-hidden={!canScrollL}
+                tabIndex={canScrollL ? 0 : -1}
+                className={`absolute left-px top-px bottom-px w-10 flex items-center justify-start pl-1 rounded-l-md transition-opacity cursor-pointer ${
+                  canScrollL
+                    ? "opacity-100"
+                    : "opacity-0 pointer-events-none"
+                }`}
+                style={{
+                  background:
+                    "linear-gradient(to right, var(--color-surface-2) 0%, var(--color-surface-2) 55%, transparent 100%)",
+                }}
+              >
+                <ChevronLeft
+                  size={16}
+                  className="text-[var(--color-text)] drop-shadow"
+                />
+              </button>
+              {/* Right edge: mirror of the left scrim. */}
+              <button
+                type="button"
+                onClick={() => scrollByDir(1)}
+                aria-label="Scroll styles right"
+                aria-hidden={!canScrollR}
+                tabIndex={canScrollR ? 0 : -1}
+                className={`absolute right-px top-px bottom-px w-10 flex items-center justify-end pr-1 rounded-r-md transition-opacity cursor-pointer ${
+                  canScrollR
+                    ? "opacity-100"
+                    : "opacity-0 pointer-events-none"
+                }`}
+                style={{
+                  background:
+                    "linear-gradient(to left, var(--color-surface-2) 0%, var(--color-surface-2) 55%, transparent 100%)",
+                }}
+              >
+                <ChevronRight
+                  size={16}
+                  className="text-[var(--color-text)] drop-shadow"
+                />
+              </button>
             </div>
           </div>
 

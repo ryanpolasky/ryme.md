@@ -33,7 +33,16 @@ function renderSvg(
   const dim = theme.muted;
 
   const name = info.name || "you";
-  const socials = info.socials.filter((s) => s.value.trim());
+  const SOCIAL_LIMIT = 4;
+  const socials = info.socials.filter((s) => s.value.trim()).slice(0, SOCIAL_LIMIT);
+  const SOCIAL_MAX_CHARS = 30;
+  const shownSocials = socials.map((s) => ({
+    ...s,
+    value:
+      s.value.length > SOCIAL_MAX_CHARS
+        ? s.value.slice(0, SOCIAL_MAX_CHARS - 1) + "…"
+        : s.value,
+  }));
 
   // Pre-compute social row layout so vertical centering knows the row count.
   const ICON = 12;
@@ -45,23 +54,21 @@ function renderSvg(
   // separator on non-first entries).
   const entryW = (s: { value: string }) =>
     ICON + 4 + s.value.length * 8 + ENTRY_GAP;
-  const rowContentW = (idxs: number[]): number =>
-    idxs.reduce((sum, i, k) => {
-      let w = entryW(socials[i]);
-      if (k > 0) w += ENTRY_GAP + 6;
-      return sum + w;
-    }, 0);
 
-  const allIdx = socials.map((_, i) => i);
-  const singleRowContentW = rowContentW(allIdx);
+  const allIdx = shownSocials.map((_, i) => i);
+  const singleRowContentW = allIdx.reduce((sum, i, k) => {
+    let w = entryW(shownSocials[i]);
+    if (k > 0) w += ENTRY_GAP + 6;
+    return sum + w;
+  }, 0);
   const wrapSocials =
-    socials.length > 1 && singleRowContentW > MAX_ROW_CONTENT_W;
+    shownSocials.length > 1 && singleRowContentW > MAX_ROW_CONTENT_W;
   const topCount = wrapSocials
-    ? Math.ceil(socials.length / 2)
-    : socials.length;
+    ? Math.ceil(shownSocials.length / 2)
+    : shownSocials.length;
   const socialsRows: number[][] = wrapSocials
     ? [allIdx.slice(0, topCount), allIdx.slice(topCount)]
-    : socials.length
+    : shownSocials.length
       ? [allIdx]
       : [];
 
@@ -89,11 +96,13 @@ function renderSvg(
   // trailing text size if it would overflow rather than truncating.
   let y = TOP + LINE_H;
   const THANKS_X = 128;
-  const THANKS_MAX_W = W - PAD_X - PAD_X - THANKS_X;
+  // Keep a right-side safety margin; mono width estimates can run slightly
+  // narrow relative to rendered glyph width.
+  const THANKS_MAX_W = W - PAD_X - PAD_X - THANKS_X - 120;
   const thanksFit = fitFontSize(
     `thanks for visiting - ${name}`,
     THANKS_MAX_W,
-    [13, 12, 11],
+    [13, 12, 11, 10],
     "mono",
   );
   rows.push({
@@ -116,7 +125,7 @@ function renderSvg(
     }
     let sx = ROW_PREFIX_W;
     idxs.forEach((i, k) => {
-      const s = socials[i];
+      const s = shownSocials[i];
       if (k > 0) {
         segs.push(`<text x="${sx}" fill="${dim}">·</text>`);
         sx += ENTRY_GAP + 6;

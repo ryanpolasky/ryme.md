@@ -8,6 +8,7 @@ import {
 } from "../lib/types";
 import { getTemplate } from "../lib/templates";
 import { encodeGif, type EncodeProgress } from "../lib/encoder/encode";
+import { cleanInfo } from "../lib/info-utils";
 import { SectionInputs } from "./SectionInputs";
 import { Button } from "./ui";
 
@@ -79,8 +80,12 @@ export function SectionEditor({
   const fullFilename = `${filename}.${ext}`;
 
   const handleDownload = async () => {
+    // Clean once at the export boundary so the downloaded artifact never
+    // contains stray whitespace, zero-width chars, or control bytes that
+    // the live form happens to be holding mid-edit.
+    const renderInfo = cleanInfo(info);
     if (template.kind === "svg") {
-      const svg = template.renderSvg(info, theme, loopDuration, { loopText });
+      const svg = template.renderSvg(renderInfo, theme, loopDuration, { loopText });
       downloadBlob(new Blob([svg], { type: "image/svg+xml" }), fullFilename);
       return;
     }
@@ -90,7 +95,7 @@ export function SectionEditor({
     try {
       const blob = await encodeGif({
         template,
-        info,
+        info: renderInfo,
         theme,
         loopDuration,
         loopText,

@@ -93,14 +93,17 @@ function TemplatePreview({
   );
 }
 
-// Highlighted by-family lineup we want shown in the showcase strip.
+// Highlighted by-family lineup we want shown in the showcase strip. Six tiles
+// (3x2 on desktop) covering header + about for the four most distinctive
+// families. Glass is omitted from the showcase because it renders to GIF and
+// the Home strip uses live SVG previews.
 const SHOWCASE_TEMPLATE_IDS = [
   "sleek-header",
+  "neon-header",
   "code-header",
   "terminal-header",
-  "sleek-about",
+  "neon-about",
   "code-about",
-  "terminal-about",
 ];
 
 const FEATURES = [
