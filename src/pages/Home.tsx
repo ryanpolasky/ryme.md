@@ -94,16 +94,16 @@ function TemplatePreview({
 }
 
 // Highlighted by-family lineup we want shown in the showcase strip. Six tiles
-// (3x2 on desktop) covering header + about for the four most distinctive
-// families. Glass is omitted from the showcase because it renders to GIF and
-// the Home strip uses live SVG previews.
+// (3x2 on desktop) covering header + about across five standout SVG families.
+// Glass is omitted from the showcase because it renders to GIF and the Home
+// strip uses live SVG previews.
 const SHOWCASE_TEMPLATE_IDS = [
   "sleek-header",
   "neon-header",
   "code-header",
   "terminal-header",
   "neon-about",
-  "code-about",
+  "blueprint-about",
 ];
 
 const FEATURES = [
@@ -261,8 +261,11 @@ function Hero() {
             motion
             <span
               aria-hidden
-              className="absolute -right-3 top-2 sm:top-4 text-[var(--color-accent)] text-[40%] tracking-tight"
-              style={{ fontFamily: "var(--font-mono)" }}
+              className="absolute -right-[0.78em] top-[0.86em] sm:-right-[0.84em] sm:top-[0.78em] text-[var(--color-accent)] text-[31%] tracking-tight opacity-90"
+              style={{
+                fontFamily: "var(--font-mono)",
+                transform: "rotate(12deg)",
+              }}
             >
               ✦
             </span>
@@ -377,7 +380,7 @@ function Showcase() {
       <div className="max-w-7xl mx-auto px-6 py-20 sm:py-28">
         <SectionLabel>The template gallery</SectionLabel>
         <h2 className="mt-2 text-[36px] sm:text-[52px] tracking-[-0.03em] leading-[1.05] text-[var(--color-text)] max-w-3xl">
-          Four families. Three sections. Pick a vibe.
+          Five families. Three sections. Pick a vibe.
         </h2>
         <p className="mt-5 max-w-2xl text-[15px] text-[var(--color-text-muted)] leading-relaxed">
           Every template renders right here in this page - what you see is
