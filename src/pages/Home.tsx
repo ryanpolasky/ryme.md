@@ -68,6 +68,10 @@ function TemplatePreview({
 
   if (!template) return null;
 
+  const effectiveH = template.intrinsicHeight
+    ? template.intrinsicHeight(DEMO_INFO)
+    : template.height;
+
   // Canvas templates: show a stylized placeholder (the `glass` family doesn't
   // need to be in the gallery since we have plenty of SVG templates to lead
   // with on the home page).
@@ -75,7 +79,7 @@ function TemplatePreview({
     return (
       <div
         className={`rounded-xl border border-[var(--color-border)] bg-[var(--color-surface-2)] grid place-items-center text-[var(--color-text-dim)] text-[11px] font-mono ${className}`}
-        style={{ aspectRatio: `${template.width} / ${template.height}` }}
+        style={{ aspectRatio: `${template.width} / ${effectiveH}` }}
       >
         glass family - animated GIF
       </div>
@@ -88,7 +92,7 @@ function TemplatePreview({
       alt={`${template.name} preview`}
       loading="lazy"
       className={`block w-full h-auto rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] ${className}`}
-      style={{ aspectRatio: `${template.width} / ${template.height}` }}
+      style={{ aspectRatio: `${template.width} / ${effectiveH}` }}
     />
   );
 }

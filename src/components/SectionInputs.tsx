@@ -5,6 +5,7 @@ import {
   type Social,
 } from "../lib/types";
 import { Input, Textarea } from "./ui";
+import { SkillsEditor } from "./SkillsEditor";
 import { SocialsEditor } from "./SocialsEditor";
 
 type Props = {
@@ -76,6 +77,16 @@ export function SectionInputs({ fields, info, onChange }: Props) {
             value={info.bio}
             onChange={(e) => set("bio", e.target.value)}
             placeholder={INFO_FIELD_META.bio.placeholder}
+          />
+        </div>
+      )}
+
+      {has("skills") && (
+        <div className="min-w-0">
+          <FieldLabel field="skills" />
+          <SkillsEditor
+            skills={info.skills}
+            onChange={(next: string[]) => onChange({ ...info, skills: next })}
           />
         </div>
       )}

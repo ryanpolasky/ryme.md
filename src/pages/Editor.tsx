@@ -34,7 +34,7 @@ function makeSection(templateId: string): Section {
 
 function defaultSections(family: TemplateFamily): Section[] {
   // One section per category that has a template in this family
-  const cats: TemplateCategory[] = ["header", "about", "footer"];
+  const cats: TemplateCategory[] = ["header", "about", "skills", "footer"];
   return cats
     .map((c) => templateFor(family, c))
     .filter((t): t is NonNullable<typeof t> => !!t)

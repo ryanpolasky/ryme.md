@@ -79,6 +79,7 @@ export function cleanInfo(info: ProfileInfo): ProfileInfo {
     location: cleanLine(info.location),
     tagline: cleanLine(info.tagline),
     bio: cleanBio(info.bio),
+    skills: cleanSkills(info.skills),
     socials: info.socials.map(
       (s): Social => ({
         kind: s.kind,
@@ -86,4 +87,24 @@ export function cleanInfo(info: ProfileInfo): ProfileInfo {
       }),
     ),
   };
+}
+
+/**
+ * Normalize the skills list: clean each entry as a single line, drop empties,
+ * and de-dupe (case-insensitively) while preserving the user's original
+ * casing on the first occurrence.
+ */
+export function cleanSkills(skills: string[] | undefined | null): string[] {
+  if (!Array.isArray(skills)) return [];
+  const seen = new Set<string>();
+  const out: string[] = [];
+  for (const raw of skills) {
+    const cleaned = cleanLine(raw);
+    if (!cleaned) continue;
+    const key = cleaned.toLowerCase();
+    if (seen.has(key)) continue;
+    seen.add(key);
+    out.push(cleaned);
+  }
+  return out;
 }

@@ -225,8 +225,9 @@ function renderSvg(
 
   // Sidebar (file tree). First file's text-middle Y sits at editorTop + 38
   // so it clears the EXPLORER header above it.
-  const sidebarFiles = ["profile.json", "README.md", ".gitconfig"];
-  const activeIdx = 1; // README.md active here
+  // Shared file tree across the whole code-* family.
+  const sidebarFiles = ["profile.json", "README.md", "stack.ts", "footer.md"];
+  const activeIdx = 1; // about -> README.md
   const sidebarItems = sidebarFiles
     .map((name, i) => {
       const y = editorTop + 38 + i * 22;

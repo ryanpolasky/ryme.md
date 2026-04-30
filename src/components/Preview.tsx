@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef } from "react";
 import type { ProfileInfo, Template, TemplateTheme } from "../lib/types";
 import { cleanInfo } from "../lib/info-utils";
+import { templateHeightFor } from "../lib/templates";
 
 type Props = {
   template: Template;
@@ -60,12 +61,16 @@ export function SvgPreview({
     () => `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`,
     [svg],
   );
+  const effectiveH = useMemo(
+    () => templateHeightFor(template, cleaned),
+    [template, cleaned],
+  );
   return (
     <img
       src={dataUrl}
       alt="Preview"
       className="w-full max-w-full h-auto block"
-      style={{ aspectRatio: `${template.width} / ${template.height}` }}
+      style={{ aspectRatio: `${template.width} / ${effectiveH}` }}
     />
   );
 }
@@ -88,6 +93,10 @@ export function CanvasPreview({
 
   // Same boundary-cleaning treatment as the SVG path.
   const cleaned = useMemo(() => cleanInfo(info), [info]);
+  const effectiveH = useMemo(
+    () => templateHeightFor(template, cleaned),
+    [template, cleaned],
+  );
 
   // Reset clock when switching templates or duration
   useEffect(() => {
@@ -105,7 +114,7 @@ export function CanvasPreview({
     const tick = (now: number) => {
       if (!running) return;
       const t = ((now - startRef.current) / 1000) % loopDuration;
-      ctx.clearRect(0, 0, template.width, template.height);
+      ctx.clearRect(0, 0, template.width, effectiveH);
       template.renderFrame(ctx, t, cleaned, theme, loopDuration, { loopText });
       raf = requestAnimationFrame(tick);
     };
@@ -114,15 +123,15 @@ export function CanvasPreview({
       running = false;
       cancelAnimationFrame(raf);
     };
-  }, [template, cleaned, theme, loopDuration, loopText]);
+  }, [template, cleaned, theme, loopDuration, loopText, effectiveH]);
 
   return (
     <canvas
       ref={canvasRef}
       width={template.width}
-      height={template.height}
+      height={effectiveH}
       className="w-full max-w-full h-auto block rounded-md"
-      style={{ aspectRatio: `${template.width} / ${template.height}` }}
+      style={{ aspectRatio: `${template.width} / ${effectiveH}` }}
     />
   );
 }

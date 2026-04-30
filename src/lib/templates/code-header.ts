@@ -175,14 +175,19 @@ function renderSvg(
   // sidebarTopY = first file's text-middle Y. EXPLORER label sits at
   // editorTop + 12 (text-middle) with 9px font, so its visual bottom is at
   // ~editorTop + 17. Start files at editorTop + 38 for ~16px breathing room.
-  const sidebarFiles = ["profile.json", "README.md", ".gitconfig"];
+  // Shared file tree across the whole code-* family. Each section's file
+  // shows up here; the active one (this template's category) gets the
+  // highlight + accent. Keeps the explorer consistent so a 4-stack
+  // README looks like a real multi-file project.
+  const sidebarFiles = ["profile.json", "README.md", "stack.ts", "footer.md"];
+  const ACTIVE_IDX = 0; // header -> profile.json
   const sidebarTopY = editorTop + 38;
   const sidebarItemH = 22;
   const sidebarFontSize = 12;
   const sidebarItems = sidebarFiles
     .map((name, i) => {
       const y = sidebarTopY + i * sidebarItemH;
-      const isActive = i === 0;
+      const isActive = i === ACTIVE_IDX;
       const fill = isActive ? theme.fg : theme.muted;
       const highlight = isActive
         ? `<rect x="0" y="${y - 14}" width="${SIDEBAR_W}" height="${sidebarItemH}" fill="${theme.fg}" fill-opacity="0.06"/>`

@@ -19,6 +19,7 @@ export type ProfileInfo = {
   location: string;
   tagline: string;
   bio: string;
+  skills: string[];
   socials: Social[];
 };
 
@@ -173,6 +174,7 @@ export type InfoField =
   | "location"
   | "tagline"
   | "bio"
+  | "skills"
   | "socials";
 
 export const INFO_FIELD_META: Record<
@@ -193,6 +195,11 @@ export const INFO_FIELD_META: Record<
     placeholder: "A paragraph for the About section.",
     multiline: true,
   },
+  skills: {
+    label: "Skills",
+    placeholder: "TypeScript",
+    hint: "Tech stack, tools, languages. Type and press Enter to add.",
+  },
   socials: { label: "Socials", placeholder: "" },
 };
 
@@ -207,6 +214,15 @@ type TemplateBase = {
   duration: number;
   /** Which ProfileInfo fields this template actually consumes. */
   fields: readonly InfoField[];
+  /**
+   * Optional. If present, the template's effective rendered height is a
+   * function of `info` (e.g., skill chip lists that grow row-by-row).
+   * Layout-aware consumers (Preview img/canvas sizing, the GIF encoder,
+   * the Home showcase) call this when set; otherwise they fall back to
+   * the static `height`. Width is always `width` -- variable-width banners
+   * aren't a thing here.
+   */
+  intrinsicHeight?: (info: ProfileInfo) => number;
 };
 
 export type Section = {
@@ -268,6 +284,16 @@ export const DEFAULT_INFO: ProfileInfo = {
   location: "Dallas, TX",
   tagline: "LLMs, iOS, infra. Recovering Java enjoyer.",
   bio: "I build things that turn LLM rollouts into accountable workflows. Lately: agent observability, replayable runs, and the kind of debugging tooling I wish existed when I started.",
+  skills: [
+    "TypeScript",
+    "Python",
+    "Swift",
+    "Rust",
+    "Postgres",
+    "Kubernetes",
+    "FastAPI",
+    "React",
+  ],
   socials: [
     { kind: "github", value: "github.com/ryanpolasky" },
     { kind: "linkedin", value: "in/ryan-polasky" },
@@ -282,5 +308,6 @@ export const EMPTY_INFO: ProfileInfo = {
   location: "",
   tagline: "",
   bio: "",
+  skills: [],
   socials: [],
 };

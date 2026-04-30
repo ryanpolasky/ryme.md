@@ -19,7 +19,12 @@ export type EncodeOptions = {
 export async function encodeGif(opts: EncodeOptions): Promise<Blob> {
   const { template, info, theme, loopDuration, loopText, onProgress } = opts;
   const renderOpts = { loopText: loopText ?? true };
-  const { width, height, fps, renderFrame } = template;
+  const { width, fps, renderFrame } = template;
+  // Templates that resize with content (e.g., skills lists) advertise a
+  // per-info height; everyone else falls back to the static height.
+  const height = template.intrinsicHeight
+    ? template.intrinsicHeight(info)
+    : template.height;
   const totalFrames = Math.max(1, Math.round(loopDuration * fps));
 
   // Render canvas (offscreen for perf; falls back to in-DOM if needed).
