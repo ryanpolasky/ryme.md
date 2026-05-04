@@ -5,6 +5,7 @@ import type {
   TemplateTheme,
 } from "../types";
 import { fitUniformFontSize } from "../text-utils";
+import { resolveCodeSidebar } from "./code-shared";
 
 const escapeXml = (s: string) =>
   s
@@ -210,19 +211,20 @@ function renderSvg(
   const cursorY =
     firstLineY + lastIdx * LINE_H - Math.round(FONT_SIZE * 0.85);
 
-  // Sidebar files -- shared list across code-* templates so a 4-section
-  // stack reads as one consistent project.
-  const sidebarFiles = ["profile.json", "README.md", "stack.ts", "footer.md"];
-  const activeIdx = 2; // skills -> stack.ts
-  const sidebarItems = sidebarFiles
-    .map((name, i) => {
-      const y = editorTop + 38 + i * 22;
-      const isActive = i === activeIdx;
-      const fill = isActive ? theme.fg : theme.muted;
-      const highlight = isActive
-        ? `<rect x="0" y="${y - 14}" width="${SIDEBAR_W}" height="22" fill="${theme.fg}" fill-opacity="0.06"/>`
+  // Sidebar files: when the editor passes the live section list via
+  // options, that list drives the explorer; otherwise we fall back to
+  // the family's static roster.
+  const sidebarItemH = 22;
+  const sidebarMax = Math.max(1, Math.floor((editorH - 38) / sidebarItemH));
+  const sidebarEntries = resolveCodeSidebar(options, "skills", sidebarMax);
+  const sidebarItems = sidebarEntries
+    .map((entry, i) => {
+      const y = editorTop + 38 + i * sidebarItemH;
+      const fill = entry.active ? theme.fg : theme.muted;
+      const highlight = entry.active
+        ? `<rect x="0" y="${y - 14}" width="${SIDEBAR_W}" height="${sidebarItemH}" fill="${theme.fg}" fill-opacity="0.06"/>`
         : "";
-      return `${highlight}<text x="20" y="${y}" fill="${fill}" font-size="12" dominant-baseline="middle">${escapeXml(name)}</text>`;
+      return `${highlight}<text x="20" y="${y}" fill="${fill}" font-size="12" dominant-baseline="middle">${escapeXml(entry.name)}</text>`;
     })
     .join("\n  ");
 

@@ -1,6 +1,9 @@
 import { useState } from "react";
 import { EMPTY_INFO, type ProfileInfo } from "../lib/types";
-import { scrapeGithub } from "../lib/github";
+import {
+  getGithubFetchErrorDetail,
+  loadGithubProfileAndStats,
+} from "../lib/github";
 import { Button, Input } from "./ui";
 import { ConfirmDialog } from "./ConfirmDialog";
 
@@ -10,7 +13,9 @@ type Props = {
 };
 
 export function ProfileToolbar({ info, onChange }: Props) {
-  const [ghInput, setGhInput] = useState("");
+  // Pre-fill from whatever username is already stored on the profile so the
+  // input survives remounts (e.g., switching sections in the editor).
+  const [ghInput, setGhInput] = useState(info.githubUsername || "");
   const [ghLoading, setGhLoading] = useState(false);
   const [ghError, setGhError] = useState<string | null>(null);
   const [confirmOpen, setConfirmOpen] = useState(false);
@@ -20,14 +25,22 @@ export function ProfileToolbar({ info, onChange }: Props) {
     setGhLoading(true);
     setGhError(null);
     try {
-      const data = await scrapeGithub(ghInput);
+      const { autofill, stats } = await loadGithubProfileAndStats(ghInput);
       onChange({
         ...info,
-        ...data,
-        socials: data.socials?.length ? data.socials : info.socials,
+        ...autofill,
+        // Honor existing socials only when GitHub returned none -- normally
+        // GitHub gives us at least the github link itself.
+        socials: autofill.socials?.length ? autofill.socials : info.socials,
+        githubUsername: stats.username,
+        githubStats: stats,
       });
+      // Mirror the canonical login back into the input so the user can see
+      // the casing GitHub stores it under.
+      setGhInput(stats.username);
     } catch (e) {
-      setGhError(e instanceof Error ? e.message : "unknown error");
+      const detail = getGithubFetchErrorDetail(e);
+      setGhError(detail.message);
     } finally {
       setGhLoading(false);
     }
@@ -68,7 +81,7 @@ export function ProfileToolbar({ info, onChange }: Props) {
         </div>
         <div className="flex gap-2 items-center flex-1 min-w-[200px]">
           <Input
-            placeholder="github username - autofill all fields"
+            placeholder="github username - autofill profile + load stats"
             value={ghInput}
             onChange={(e) => setGhInput(e.target.value)}
             onKeyDown={(e) => {
@@ -96,11 +109,76 @@ export function ProfileToolbar({ info, onChange }: Props) {
           Clear all
         </Button>
       </div>
-      {ghError && (
-        <p className="text-[11px] text-red-400 break-words mt-2 font-mono">
-          {ghError}
-        </p>
-      )}
+      <StatusLine
+        loading={ghLoading}
+        error={ghError}
+        stats={info.githubStats}
+      />
     </section>
   );
+}
+
+function StatusLine({
+  loading,
+  error,
+  stats,
+}: {
+  loading: boolean;
+  error: string | null;
+  stats: ProfileInfo["githubStats"];
+}) {
+  if (loading) {
+    return (
+      <p className="text-[11px] text-[var(--color-text-dim)] mt-2 font-mono">
+        fetching github...
+      </p>
+    );
+  }
+  if (error) {
+    return (
+      <p className="text-[11px] text-red-400 break-words mt-2 font-mono">
+        {error}
+      </p>
+    );
+  }
+  if (stats) {
+    const langCount = stats.languages.length;
+    const showCommits =
+      typeof stats.totals.commitsThisYear === "number" &&
+      stats.totals.commitsThisYear > 0;
+    return (
+      <p className="text-[11px] text-[var(--color-text-dim)] mt-2 font-mono break-words">
+        <span className="text-emerald-400">loaded</span>{" "}
+        <span className="text-[var(--color-text)]">@{stats.username}</span>
+        {" - "}
+        {stats.totals.starsReceived.toLocaleString()}{"\u2605"}
+        {" - "}
+        {stats.profile.publicRepos.toLocaleString()} repos
+        {langCount > 0 && (
+          <>
+            {" - "}
+            {langCount} lang{langCount === 1 ? "" : "s"}
+          </>
+        )}
+        {showCommits && (
+          <>
+            {" - "}
+            {stats.totals.commitsThisYear!.toLocaleString()} commits this yr
+          </>
+        )}
+        {stats.source === "rest-unauth" && (
+          <>
+            {" - "}
+            <span
+              className="text-amber-400"
+              title="Server has no GITHUB_TOKEN set. Showing reduced stats from the unauth REST path."
+            >
+              unauth
+            </span>
+          </>
+        )}
+      </p>
+    );
+  }
+  return null;
 }

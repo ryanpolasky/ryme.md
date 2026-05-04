@@ -14,6 +14,7 @@ import {
   wrapTextByWidth,
 } from "../canvas-utils";
 import {
+  GLASS_TEXT,
   drawCanvasFrame,
   drawGlassBackground,
   drawGlassCard,
@@ -108,13 +109,13 @@ function renderFrame(
   let ty = Math.round(cardCenterY - blockH / 2 + HEADING_CAP);
 
   // Heading
-  ctx.fillStyle = theme.fg;
+  ctx.fillStyle = GLASS_TEXT;
   ctx.font = `700 ${headingSize}px ${SANS}`;
   ctx.fillText(headingText, innerX, ty);
 
   // Bio
   if (bioLines.length) {
-    ctx.fillStyle = rgba(theme.fg, 0.75);
+    ctx.fillStyle = rgba(GLASS_TEXT, 0.75);
     ctx.font = `400 14px ${SANS}`;
     let bioY = ty + HEADING_TO_BIO;
     for (let i = 0; i < bioLines.length; i++) {
@@ -173,19 +174,11 @@ function renderFrame(
       ctx.strokeStyle = rgba(theme.accent, 0.5);
       ctx.lineWidth = 1;
       ctx.stroke();
-      ctx.fillStyle = theme.fg;
+      ctx.fillStyle = GLASS_TEXT;
       ctx.fillText(d.text, px + PILL_PAD, pillY + 1);
       px += d.width + PILL_GAP;
     }
   }
-
-  // Watermark (bottom right, very faint)
-  ctx.font = `400 10px ${MONO}`;
-  ctx.fillStyle = rgba(theme.fg, 0.35);
-  ctx.textAlign = "right";
-  ctx.textBaseline = "alphabetic";
-  ctx.fillText("made with RyMe.md", W - 18, H - 14);
-  ctx.textAlign = "left";
 
   drawCanvasFrame(ctx, W, H, 14);
 }

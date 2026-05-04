@@ -64,10 +64,30 @@ npm run dev          # http://localhost:5173 (or next free port)
 
 Then visit `/` for the marketing page or `/editor` for the workspace.
 
+The `Load` button in the editor's profile toolbar talks to a Pages
+Function at `/api/github/:username`. `npm run dev` (vite alone) does not
+serve that endpoint — for full stats the dev command is:
+
+```bash
+npm run pages:dev    # wrangler pages dev → http://localhost:8788
+```
+
+It runs vite under wrangler so both the static site and the function
+are reachable on one origin. Without `GITHUB_TOKEN` (see Deploy below),
+the function falls back to unauth REST and returns reduced stats; the
+toolbar shows an `unauth` flag in that case.
+
+> Wrangler will print a deprecation warning for the `-- <cmd>` mode.
+> Ignore it for now — the alternative ("build to `dist`, then
+> `wrangler pages dev dist`") loses Vite HMR, which is unacceptable
+> for active development. When wrangler ships a unified dev command
+> that keeps HMR, the script will be migrated.
+
 ```bash
 npm run build        # tsc -b && vite build → ./dist
 npm run preview      # serve ./dist locally
 npm run lint         # eslint .
+npm run pages:deploy # build + wrangler pages deploy dist
 ```
 
 ## How it works
@@ -192,18 +212,59 @@ A few things that aren't obvious from the code alone:
 
 ### Cloudflare Pages (recommended)
 
+The static site **plus** the GitHub stats Pages Function deploy together.
+
 ```bash
 npm run build
 npx wrangler pages deploy dist --project-name ryme-md
 ```
 
-Or via the dashboard: connect to GitHub, set **Build command** `npm run build`, **Output directory** `dist`, framework preset Vite. Pushes to `main` deploy automatically.
+Or via the dashboard: connect to GitHub, set **Build command**
+`npm run build`, **Output directory** `dist`, framework preset Vite.
+Pushes to `main` deploy automatically. The function in `functions/api/github/[username].ts` is picked up by Pages without extra config.
 
-No env vars or secrets required for the MVP. If you ever hit GitHub's 60 req/hr unauthenticated limit on the profile-scrape feature, drop a Pages Function at `functions/api/github/[username].ts` that proxies with a server-side token — that's the only place a server is ever needed.
+#### `GITHUB_TOKEN` (recommended)
+
+Without a token the function still works (unauth REST, 60 req/hr **per
+visitor IP**, partial stats payload). With one, it switches to the
+GraphQL aggregator: byte-accurate languages, this-year commit / PR /
+issue / review counts, lifetime PR + issue counts, pinned items, and a
+53-week contribution heatmap — at 5000 req/hr per token, shared across
+all visitors and softened by the KV cache below.
+
+1. Generate a classic PAT: <https://github.com/settings/tokens>. Leave every scope unchecked. Classic no-scope tokens can read public GraphQL data and get the normal 5000 req/hr authenticated limit. Fine-grained `github_pat_...` tokens can work for narrow repo reads, but often fail on global GraphQL profile/activity fields with `Resource not accessible by personal access token`.
+2. In the Cloudflare dashboard: **Pages → ryme-md → Settings →
+   Environment variables → Add variable**, name `GITHUB_TOKEN`, mark it
+   encrypted, paste the token.
+3. Trigger a redeploy (push to `main` or `wrangler pages deployment list`
+   → retry).
+
+Locally, copy `.dev.vars.example` to `.dev.vars` and put the same token
+there for `npm run pages:dev`. Restart wrangler after changing `.dev.vars`;
+it only reads secrets at startup.
+
+#### `STATS_CACHE` KV namespace (optional)
+
+Caches each `/api/github/:username` response for 6 h, so repeat hits
+for the same handle don't burn the token's rate budget.
+
+```bash
+npx wrangler kv namespace create STATS_CACHE
+```
+
+Paste the printed `id` into the commented-out `[[kv_namespaces]]` block
+in `wrangler.toml` and commit. The function reads the binding lazily —
+absence is non-fatal, it just means every request hits GitHub.
 
 ### Anywhere else
 
-Output is plain static files in `dist/`. Drop them into Netlify, Vercel, Bunny, S3 + CloudFront, an `nginx` config, whatever. The only runtime requirement is a modern browser with `OffscreenCanvas` and Web Workers (Chrome 69+, Firefox 105+, Safari 16.4+).
+Output is plain static files in `dist/`. Drop them into Netlify, Vercel,
+Bunny, S3 + CloudFront, an `nginx` config, whatever. You'll lose the
+GitHub Pages Function (the editor's `Load` button will fail) unless the
+host supports a compatible serverless runtime — porting the function to
+Vercel Edge / Netlify Functions is a one-file change. The only runtime
+requirement on the client side is a modern browser with `OffscreenCanvas`
+and Web Workers (Chrome 69+, Firefox 105+, Safari 16.4+).
 
 ## Roadmap
 

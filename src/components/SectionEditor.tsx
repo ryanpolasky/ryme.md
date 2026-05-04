@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import {
   CATEGORY_META,
   FAMILY_DEFAULT_THEME,
@@ -6,7 +6,7 @@ import {
   type Section,
   type TemplateTheme,
 } from "../lib/types";
-import { getTemplate } from "../lib/templates";
+import { buildSidebarFiles, getTemplate } from "../lib/templates";
 import { encodeGif, type EncodeProgress } from "../lib/encoder/encode";
 import { cleanInfo } from "../lib/info-utils";
 import { SectionInputs } from "./SectionInputs";
@@ -19,6 +19,10 @@ type Props = {
   info: ProfileInfo;
   onInfoChange: (next: ProfileInfo) => void;
   filename: string;
+  /** All sections in render order; used to build the code-family sidebar. */
+  sections: Section[];
+  /** Resolves a section to its base filename (no extension). */
+  filenameFor: (section: Section) => string;
   globalTheme: Partial<TemplateTheme>;
   loopDuration: number;
   loopText: boolean;
@@ -44,12 +48,21 @@ export function SectionEditor({
   info,
   onInfoChange,
   filename,
+  sections,
+  filenameFor,
   globalTheme,
   loopDuration,
   loopText,
   onRemove,
   onMove,
 }: Props) {
+  // sidebar list reflects every selected section's downloaded filename.
+  // code-family templates render this in their file explorer; everyone
+  // else ignores it.
+  const sidebarFiles = useMemo(
+    () => buildSidebarFiles(sections, section.id, filenameFor),
+    [sections, section.id, filenameFor],
+  );
   const template = getTemplate(section.templateId);
   if (!template) {
     return (
@@ -85,7 +98,10 @@ export function SectionEditor({
     // the live form happens to be holding mid-edit.
     const renderInfo = cleanInfo(info);
     if (template.kind === "svg") {
-      const svg = template.renderSvg(renderInfo, theme, loopDuration, { loopText });
+      const svg = template.renderSvg(renderInfo, theme, loopDuration, {
+        loopText,
+        sidebarFiles,
+      });
       downloadBlob(new Blob([svg], { type: "image/svg+xml" }), fullFilename);
       return;
     }
@@ -99,6 +115,7 @@ export function SectionEditor({
         theme,
         loopDuration,
         loopText,
+        sidebarFiles,
         onProgress: setProgress,
       });
       downloadBlob(blob, fullFilename);

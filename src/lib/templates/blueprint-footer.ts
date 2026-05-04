@@ -4,6 +4,7 @@ import type {
   SvgTemplate,
   TemplateTheme,
 } from "../types";
+import { sheetIndexLabel } from "./blueprint-shared";
 
 const escapeXml = (s: string) =>
   s
@@ -66,6 +67,7 @@ function renderSvg(
   options?: RenderOptions,
 ): string {
   const loopText = options?.loopText ?? true;
+  const sheetLabel = sheetIndexLabel(options, "footer");
   const W = 800;
   const H = 300;
   const PAD = 24;
@@ -217,7 +219,9 @@ function renderSvg(
     <text x="0" y="36" text-anchor="middle" fill="${accent}" font-family="ui-monospace, monospace" font-size="9" letter-spacing="1.5" opacity="0.85">26.10.26</text>
   </g>`;
 
-  // ===== Title block (same 5-cell strip; SHEET reads 03 / 03) =====
+  // ===== Title block (same 5-cell strip; SHEET reflects this section's
+  // position in the live stack, or falls back to 'last sheet' for isolated
+  // previews) =====
   const titleBlockX = PAD;
   const titleBlockW = W - PAD * 2;
   const cellW = Math.floor(titleBlockW / 5);
@@ -226,7 +230,7 @@ function renderSvg(
     { label: "DATE", value: "26.10" },
     { label: "SCALE", value: "1:1" },
     { label: "REV", value: "1.0" },
-    { label: "SHEET", value: "03 / 03" },
+    { label: "SHEET", value: sheetLabel },
   ]
     .map((c, i) => {
       const x = titleBlockX + i * cellW;
@@ -260,7 +264,7 @@ function renderSvg(
   // raw `&` in SVG text is an unescaped entity reference and makes the
   // whole SVG fail to parse in the browser (the preview renders blank).
   const topLeftLabel = "FIG. 03    REFERENCES \u00B7 CERTIFICATION";
-  const topRightLabel = "SHEET 03 / 03";
+  const topRightLabel = `SHEET ${sheetLabel}`;
 
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">
   <style>${css}</style>
@@ -316,6 +320,10 @@ function renderSvg(
 
   <!-- Title block -->
   ${titleCells}
+
+  <!-- ryme.md attribution: small uppercase mono credit inside the bottom-right
+       margin, low-opacity so it reads as drafted-on metadata rather than a logo. -->
+  <text x="${W - PAD - 6}" y="${H - 10}" text-anchor="end" fill="${muted}" fill-opacity="0.55" font-family="ui-monospace, monospace" font-size="9" letter-spacing="1.2">DRAFTED ON RYME.MD</text>
 </svg>`;
 }
 

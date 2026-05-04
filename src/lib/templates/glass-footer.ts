@@ -7,6 +7,7 @@ import type {
 import { drawSocialIcon } from "../social-icons";
 import { MONO, SANS, fitFontSize, rgba } from "../canvas-utils";
 import {
+  GLASS_TEXT,
   drawCanvasFrame,
   drawGlassBackground,
   drawGlassCard,
@@ -119,11 +120,11 @@ function renderFrame(
 
   ctx.font = `500 ${signoffSize}px ${SANS}`;
   ctx.textAlign = "left";
-  ctx.fillStyle = rgba(theme.fg, 0.85);
+  ctx.fillStyle = rgba(GLASS_TEXT, 0.85);
   ctx.fillText(left, startX, ty);
   ctx.fillStyle = theme.accent;
   ctx.fillText(heart, startX + lw, ty);
-  ctx.fillStyle = rgba(theme.fg, 0.85);
+  ctx.fillStyle = rgba(GLASS_TEXT, 0.85);
   ctx.fillText(right, startX + lw + hw, ty);
 
   // Socials rows (1 or 2), each centered around card centerline
@@ -136,9 +137,9 @@ function renderFrame(
       let sx = cx - rowW / 2;
       const sy = firstRowCenter + rowI * (ICON + ROW_GAP);
       for (const i of rowIdxs) {
-        drawSocialIcon(ctx, shownSocials[i].kind, sx, sy - ICON / 2, ICON, rgba(theme.fg, 0.85), 2);
+        drawSocialIcon(ctx, shownSocials[i].kind, sx, sy - ICON / 2, ICON, rgba(GLASS_TEXT, 0.85), 2);
         sx += ICON + ICON_GAP;
-        ctx.fillStyle = rgba(theme.fg, 0.65);
+        ctx.fillStyle = rgba(GLASS_TEXT, 0.65);
         ctx.fillText(shownSocials[i].value, sx, sy);
         sx += widths[i] + ENTRY_GAP;
       }
@@ -146,6 +147,14 @@ function renderFrame(
     ctx.textBaseline = "alphabetic";
     ctx.textAlign = "center";
   }
+
+  // ryme.md attribution: low-opacity mono credit in the bottom-right.
+  ctx.font = `400 10px ${MONO}`;
+  ctx.fillStyle = rgba(GLASS_TEXT, 0.35);
+  ctx.textAlign = "right";
+  ctx.textBaseline = "alphabetic";
+  ctx.fillText("made with ryme.md", W - 18, H - 14);
+  ctx.textAlign = "left";
 
   drawCanvasFrame(ctx, W, H, 14);
 }

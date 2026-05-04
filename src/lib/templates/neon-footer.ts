@@ -236,7 +236,6 @@ function renderSvg(
     <circle class="status-dot" cx="2" cy="-2" r="2.5" fill="${muted}" filter="drop-shadow(0 0 3px ${muted})"/>
     <text x="12" y="2" fill="${muted}" font-family="ui-monospace, monospace" font-size="10" letter-spacing="1.5">CONNECTED</text>
   </g>
-  <text x="${W - 40}" y="${HEADER_Y + 2}" text-anchor="end" fill="${muted}" fill-opacity="0.6" font-family="ui-monospace, monospace" font-size="10" letter-spacing="1.5">[ ${(loopDuration).toFixed(0)}s LOOP // EOF ]</text>
 
   <!-- Big "// END_TRANSMISSION" header -->
   <text class="tx" x="${cx}" y="${TX_Y}" text-anchor="middle" fill="${fg}" font-family="ui-monospace, monospace" font-size="20" font-weight="700" letter-spacing="2" filter="drop-shadow(0 0 6px ${accent})">${escapeXml(headerText)}</text>

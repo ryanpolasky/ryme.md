@@ -1,4 +1,9 @@
-import type { CanvasTemplate, ProfileInfo, TemplateTheme } from "../types";
+import type {
+  CanvasTemplate,
+  CodeSidebarFile,
+  ProfileInfo,
+  TemplateTheme,
+} from "../types";
 
 export type EncodeProgress = {
   phase: "render" | "encode" | "done";
@@ -13,12 +18,15 @@ export type EncodeOptions = {
   loopDuration: number;
   /** Forwarded to renderFrame; defaults to true. */
   loopText?: boolean;
+  /** Forwarded to renderFrame; ignored by templates that have no sidebar. */
+  sidebarFiles?: CodeSidebarFile[];
   onProgress?: (p: EncodeProgress) => void;
 };
 
 export async function encodeGif(opts: EncodeOptions): Promise<Blob> {
-  const { template, info, theme, loopDuration, loopText, onProgress } = opts;
-  const renderOpts = { loopText: loopText ?? true };
+  const { template, info, theme, loopDuration, loopText, sidebarFiles, onProgress } =
+    opts;
+  const renderOpts = { loopText: loopText ?? true, sidebarFiles };
   const { width, fps, renderFrame } = template;
   // Templates that resize with content (e.g., skills lists) advertise a
   // per-info height; everyone else falls back to the static height.

@@ -1,5 +1,10 @@
 import { useEffect, useMemo, useRef } from "react";
-import type { ProfileInfo, Template, TemplateTheme } from "../lib/types";
+import type {
+  CodeSidebarFile,
+  ProfileInfo,
+  Template,
+  TemplateTheme,
+} from "../lib/types";
 import { cleanInfo } from "../lib/info-utils";
 import { templateHeightFor } from "../lib/templates";
 
@@ -9,9 +14,17 @@ type Props = {
   theme: TemplateTheme;
   loopDuration: number;
   loopText: boolean;
+  sidebarFiles?: CodeSidebarFile[];
 };
 
-export function Preview({ template, info, theme, loopDuration, loopText }: Props) {
+export function Preview({
+  template,
+  info,
+  theme,
+  loopDuration,
+  loopText,
+  sidebarFiles,
+}: Props) {
   return (
     <div className="rounded-xl overflow-hidden border border-[var(--color-border)] checkerboard">
       <div className="p-6 flex items-center justify-center">
@@ -22,6 +35,7 @@ export function Preview({ template, info, theme, loopDuration, loopText }: Props
             theme={theme}
             loopDuration={loopDuration}
             loopText={loopText}
+            sidebarFiles={sidebarFiles}
           />
         ) : (
           <CanvasPreview
@@ -30,6 +44,7 @@ export function Preview({ template, info, theme, loopDuration, loopText }: Props
             theme={theme}
             loopDuration={loopDuration}
             loopText={loopText}
+            sidebarFiles={sidebarFiles}
           />
         )}
       </div>
@@ -43,19 +58,25 @@ export function SvgPreview({
   theme,
   loopDuration,
   loopText,
+  sidebarFiles,
 }: {
   template: Extract<Template, { kind: "svg" }>;
   info: ProfileInfo;
   theme: TemplateTheme;
   loopDuration: number;
   loopText: boolean;
+  sidebarFiles?: CodeSidebarFile[];
 }) {
   // Clean at the render boundary -- form state still holds the raw user
   // text, but the SVG only sees normalized values.
   const cleaned = useMemo(() => cleanInfo(info), [info]);
   const svg = useMemo(
-    () => template.renderSvg(cleaned, theme, loopDuration, { loopText }),
-    [template, cleaned, theme, loopDuration, loopText],
+    () =>
+      template.renderSvg(cleaned, theme, loopDuration, {
+        loopText,
+        sidebarFiles,
+      }),
+    [template, cleaned, theme, loopDuration, loopText, sidebarFiles],
   );
   const dataUrl = useMemo(
     () => `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`,
@@ -81,12 +102,14 @@ export function CanvasPreview({
   theme,
   loopDuration,
   loopText,
+  sidebarFiles,
 }: {
   template: Extract<Template, { kind: "canvas" }>;
   info: ProfileInfo;
   theme: TemplateTheme;
   loopDuration: number;
   loopText: boolean;
+  sidebarFiles?: CodeSidebarFile[];
 }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const startRef = useRef<number>(performance.now());
@@ -115,7 +138,10 @@ export function CanvasPreview({
       if (!running) return;
       const t = ((now - startRef.current) / 1000) % loopDuration;
       ctx.clearRect(0, 0, template.width, effectiveH);
-      template.renderFrame(ctx, t, cleaned, theme, loopDuration, { loopText });
+      template.renderFrame(ctx, t, cleaned, theme, loopDuration, {
+        loopText,
+        sidebarFiles,
+      });
       raf = requestAnimationFrame(tick);
     };
     raf = requestAnimationFrame(tick);
@@ -123,7 +149,7 @@ export function CanvasPreview({
       running = false;
       cancelAnimationFrame(raf);
     };
-  }, [template, cleaned, theme, loopDuration, loopText, effectiveH]);
+  }, [template, cleaned, theme, loopDuration, loopText, sidebarFiles, effectiveH]);
 
   return (
     <canvas

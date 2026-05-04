@@ -239,7 +239,6 @@ function renderSvg(
   <g class="scan">
     <rect width="${W}" height="${H + 8}" fill="url(#scan-skills)" pointer-events="none"/>
   </g>
-  <text fill="${muted}" fill-opacity="0.4" font-family="ui-monospace, monospace" font-size="10" x="${FRAME_X + 14}" y="${statusY + 3}">// RYME.MD</text>
 </svg>`;
 }
 

@@ -6,6 +6,7 @@ import type {
 } from "../types";
 import { MONO, SANS, rgba, roundRect } from "../canvas-utils";
 import {
+  GLASS_TEXT,
   drawCanvasFrame,
   drawGlassBackground,
   drawGlassCard,
@@ -112,12 +113,12 @@ function renderFrame(
   const innerX = cardX + 32;
 
   // Heading
-  ctx.fillStyle = theme.fg;
+  ctx.fillStyle = GLASS_TEXT;
   ctx.font = `700 28px ${SANS}`;
   ctx.fillText("Stack", innerX, cardY + HEADING_TOP);
 
   // Sub-line
-  ctx.fillStyle = rgba(theme.fg, 0.55);
+  ctx.fillStyle = rgba(GLASS_TEXT, 0.55);
   ctx.font = `400 13px ${SANS}`;
   const sub =
     skills.length === 0
@@ -144,7 +145,7 @@ function renderFrame(
       ctx.strokeStyle = rgba(theme.accent, 0.5);
       ctx.lineWidth = 1;
       ctx.stroke();
-      ctx.fillStyle = theme.fg;
+      ctx.fillStyle = GLASS_TEXT;
       ctx.fillText(
         skills[i],
         xCursor + chipPad,
@@ -153,14 +154,6 @@ function renderFrame(
       xCursor += w + PILL_GAP;
     }
   }
-
-  // Watermark (bottom right, very faint)
-  ctx.font = `400 10px ${MONO}`;
-  ctx.fillStyle = rgba(theme.fg, 0.35);
-  ctx.textAlign = "right";
-  ctx.textBaseline = "alphabetic";
-  ctx.fillText("made with RyMe.md", W - 18, H - 14);
-  ctx.textAlign = "left";
 
   drawCanvasFrame(ctx, W, H, 14);
 }

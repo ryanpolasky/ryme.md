@@ -7,7 +7,7 @@ import {
   type Section,
   type TemplateTheme,
 } from "../lib/types";
-import { getTemplate } from "../lib/templates";
+import { buildSidebarFiles, getTemplate } from "../lib/templates";
 import { encodeGif } from "../lib/encoder/encode";
 import { cleanInfo } from "../lib/info-utils";
 import { CanvasPreview, SvgPreview } from "./Preview";
@@ -63,8 +63,12 @@ export function FullStackPreview({
         const theme: TemplateTheme = { ...familyDefault, ...globalTheme };
         const base = filenameFor(section);
 
+        const sidebarFiles = buildSidebarFiles(sections, section.id, filenameFor);
         if (template.kind === "svg") {
-          const svg = template.renderSvg(renderInfo, theme, loopDuration, { loopText });
+          const svg = template.renderSvg(renderInfo, theme, loopDuration, {
+            loopText,
+            sidebarFiles,
+          });
           zip.file(`${base}.svg`, svg);
         } else {
           setZipMsg(`Encoding ${base}.gif (${done + 1}/${sections.length})`);
@@ -74,6 +78,7 @@ export function FullStackPreview({
             theme,
             loopDuration,
             loopText,
+            sidebarFiles,
           });
           const buf = await blob.arrayBuffer();
           zip.file(`${base}.gif`, buf);
@@ -147,6 +152,11 @@ export function FullStackPreview({
               ...globalTheme,
             };
             const meta = CATEGORY_META[template.category];
+            const sidebarFiles = buildSidebarFiles(
+              sections,
+              section.id,
+              filenameFor,
+            );
 
             return (
               <div
@@ -163,6 +173,7 @@ export function FullStackPreview({
                     theme={theme}
                     loopDuration={loopDuration}
                     loopText={loopText}
+                    sidebarFiles={sidebarFiles}
                   />
                 ) : (
                   <CanvasPreview
@@ -171,6 +182,7 @@ export function FullStackPreview({
                     theme={theme}
                     loopDuration={loopDuration}
                     loopText={loopText}
+                    sidebarFiles={sidebarFiles}
                   />
                 )}
               </div>

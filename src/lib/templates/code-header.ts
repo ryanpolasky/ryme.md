@@ -5,6 +5,7 @@ import type {
   TemplateTheme,
 } from "../types";
 import { fitUniformFontSize } from "../text-utils";
+import { resolveCodeSidebar } from "./code-shared";
 
 const escapeXml = (s: string) =>
   s
@@ -121,9 +122,17 @@ function renderSvg(
   const cw = FONT_SIZE * 0.6; // mono em width
   const LINE_H = Math.max(20, Math.round(FONT_SIZE * 1.55));
 
-  // Vertically center the JSON block inside the editor zone.
+  // Vertically place the JSON block inside the editor zone. The chrome
+  // (title + tab bars) at the top adds visual weight, so a true centered
+  // layout leaves an empty band below the close brace. Bias the placement
+  // downward by EXTRA_TOP so the JSON visually balances against the chrome
+  // and the bottom feels less padded.
+  const EXTRA_TOP = 16;
   const blockH = lineCount * LINE_H;
-  const editorPaddingY = Math.round((editorH - blockH) / 2);
+  const editorPaddingY = Math.max(
+    12,
+    Math.round((editorH - blockH) / 2) + EXTRA_TOP,
+  );
   const firstLineY = editorTop + editorPaddingY + Math.round(FONT_SIZE * 0.85);
 
   // Rebuild fields from the (possibly truncated) raw lines so values that
@@ -175,24 +184,22 @@ function renderSvg(
   // sidebarTopY = first file's text-middle Y. EXPLORER label sits at
   // editorTop + 12 (text-middle) with 9px font, so its visual bottom is at
   // ~editorTop + 17. Start files at editorTop + 38 for ~16px breathing room.
-  // Shared file tree across the whole code-* family. Each section's file
-  // shows up here; the active one (this template's category) gets the
-  // highlight + accent. Keeps the explorer consistent so a 4-stack
-  // README looks like a real multi-file project.
-  const sidebarFiles = ["profile.json", "README.md", "stack.ts", "footer.md"];
-  const ACTIVE_IDX = 0; // header -> profile.json
+  // when the editor passes the live section list via options, that list
+  // drives the explorer and this template's section is marked active;
+  // otherwise we fall back to the family's static roster.
   const sidebarTopY = editorTop + 38;
   const sidebarItemH = 22;
   const sidebarFontSize = 12;
-  const sidebarItems = sidebarFiles
-    .map((name, i) => {
+  const sidebarMax = Math.max(1, Math.floor((editorH - 38) / sidebarItemH));
+  const sidebarEntries = resolveCodeSidebar(options, "header", sidebarMax);
+  const sidebarItems = sidebarEntries
+    .map((entry, i) => {
       const y = sidebarTopY + i * sidebarItemH;
-      const isActive = i === ACTIVE_IDX;
-      const fill = isActive ? theme.fg : theme.muted;
-      const highlight = isActive
+      const fill = entry.active ? theme.fg : theme.muted;
+      const highlight = entry.active
         ? `<rect x="0" y="${y - 14}" width="${SIDEBAR_W}" height="${sidebarItemH}" fill="${theme.fg}" fill-opacity="0.06"/>`
         : "";
-      return `${highlight}<text x="20" y="${y}" fill="${fill}" font-size="${sidebarFontSize}" dominant-baseline="middle">${escapeXml(name)}</text>`;
+      return `${highlight}<text x="20" y="${y}" fill="${fill}" font-size="${sidebarFontSize}" dominant-baseline="middle">${escapeXml(entry.name)}</text>`;
     })
     .join("\n  ");
 

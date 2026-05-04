@@ -5,6 +5,7 @@ import type {
   TemplateTheme,
 } from "../types";
 import { wrapByChars } from "../text-utils";
+import { sheetIndexLabel } from "./blueprint-shared";
 
 const escapeXml = (s: string) =>
   s
@@ -86,6 +87,7 @@ function renderSvg(
   options?: RenderOptions,
 ): string {
   const loopText = options?.loopText ?? true;
+  const sheetLabel = sheetIndexLabel(options, "about");
   const W = 800;
   const H = 300;
   const PAD = 24;
@@ -205,7 +207,7 @@ function renderSvg(
     { label: "DATE", value: "26.10" },
     { label: "SCALE", value: "1:1" },
     { label: "REV", value: "1.0" },
-    { label: "SHEET", value: "02 / 03" },
+    { label: "SHEET", value: sheetLabel },
   ]
     .map((c, i) => {
       const x = titleBlockX + i * cellW;
@@ -236,7 +238,7 @@ function renderSvg(
 
   // --- Top strip text ---
   const topLeftLabel = "FIG. 02    BIOGRAPHICAL DATA";
-  const topRightLabel = "SHEET 02 / 03";
+  const topRightLabel = `SHEET ${sheetLabel}`;
 
   // Build the panel bodies first (string contents), then wrap in panel chrome.
   const notesPanel = panel(

@@ -12,6 +12,19 @@ export type Social = {
   value: string;
 };
 
+// GitHub data types live in their own DOM-free module so the Pages
+// Function can import them under a Workers tsconfig. Re-exported here
+// for back-compat with existing client imports.
+import type { GitHubStats } from "./github-types";
+export type {
+  GitHubContributionCalendar,
+  GitHubContributionDay,
+  GitHubFetchError,
+  GitHubLanguageBucket,
+  GitHubRepoSummary,
+  GitHubStats,
+} from "./github-types";
+
 export type ProfileInfo = {
   name: string;
   role: string;
@@ -21,6 +34,17 @@ export type ProfileInfo = {
   bio: string;
   skills: string[];
   socials: Social[];
+  /**
+   * The GitHub handle the user typed (already normalized -- no @, no URL).
+   * Persists across sections so any github-aware template can use it.
+   */
+  githubUsername: string;
+  /**
+   * Last successful stats fetch, or null if none has happened yet. This
+   * is derived/fetched data; the editor refreshes it on demand. Templates
+   * that render bar charts pull from here; those that don't can ignore it.
+   */
+  githubStats: GitHubStats | null;
 };
 
 export type TemplateTheme = {
@@ -38,6 +62,7 @@ export type TemplateCategory =
   | "header"
   | "about"
   | "skills"
+  | "stats"
   | "footer";
 
 export const CATEGORY_META: Record<
@@ -59,6 +84,11 @@ export const CATEGORY_META: Record<
     hint: "Tech stack / what you work with.",
     defaultFilename: "skills",
   },
+  stats: {
+    label: "Stats",
+    hint: "GitHub activity, languages, and contributions.",
+    defaultFilename: "gh-stats",
+  },
   footer: {
     label: "Footer",
     hint: "Sign-off at the bottom of your README.",
@@ -70,6 +100,7 @@ export const CATEGORY_ORDER: TemplateCategory[] = [
   "header",
   "about",
   "skills",
+  "stats",
   "footer",
 ];
 
@@ -128,10 +159,15 @@ export const FAMILY_DEFAULT_THEME: Record<TemplateFamily, TemplateTheme> = {
     muted: "#5a5a64",
   },
   glass: {
+    // Glass routes fg + muted to two of the three drifting mesh blobs (the
+    // third is driven by accent). Defaults preserve the original cyan + pink
+    // blob palette; text rendering in the glass family is decoupled from
+    // these values and uses fixed GLASS_TEXT / GLASS_TEXT_MUTED constants
+    // (see glass-shared.ts).
     bg: "#0b0b12",
-    fg: "#f7f7fb",
+    fg: "#22d3ee",
     accent: "#7c3aed",
-    muted: "#a5a5b3",
+    muted: "#f472b6",
   },
   sleek: {
     bg: "#0d0d10",
@@ -175,7 +211,8 @@ export type InfoField =
   | "tagline"
   | "bio"
   | "skills"
-  | "socials";
+  | "socials"
+  | "github";
 
 export const INFO_FIELD_META: Record<
   InfoField,
@@ -201,6 +238,11 @@ export const INFO_FIELD_META: Record<
     hint: "Tech stack, tools, languages. Type and press Enter to add.",
   },
   socials: { label: "Socials", placeholder: "" },
+  github: {
+    label: "GitHub",
+    placeholder: "your-handle",
+    hint: "Live stars / repo count / language mix, fetched in the browser.",
+  },
 };
 
 type TemplateBase = {
@@ -231,12 +273,15 @@ export type Section = {
 };
 
 /**
- * Optional knobs forwarded to render functions. Right now this just controls
- * whether content fades in/out across the loop (`loopText`); more options can
- * be added without breaking template signatures.
- *
- * Templates that don't care about an option simply ignore it.
+ * One file entry as it should appear in a code-family sidebar (file
+ * explorer). `name` is the displayed filename, `active` marks the entry
+ * currently being rendered. The list is ordered top-to-bottom.
  */
+export type CodeSidebarFile = {
+  name: string;
+  active: boolean;
+};
+
 export type RenderOptions = {
   /**
    * When true (default), text/content animations cycle (fade out at the end
@@ -245,6 +290,14 @@ export type RenderOptions = {
    * way.
    */
   loopText?: boolean;
+  /**
+   * Sibling sections whose filenames should appear in the code-family
+   * sidebar (file explorer). Templates that don't render a sidebar
+   * (everything except the `code-*` family) ignore this. When omitted,
+   * code templates fall back to a static four-file list so isolated
+   * previews still look like a real editor.
+   */
+  sidebarFiles?: CodeSidebarFile[];
 };
 
 export type CanvasTemplate = TemplateBase & {
@@ -299,6 +352,8 @@ export const DEFAULT_INFO: ProfileInfo = {
     { kind: "linkedin", value: "in/ryan-polasky" },
     { kind: "website", value: "ryanpolasky.com" },
   ],
+  githubUsername: "",
+  githubStats: null,
 };
 
 export const EMPTY_INFO: ProfileInfo = {
@@ -310,4 +365,6 @@ export const EMPTY_INFO: ProfileInfo = {
   bio: "",
   skills: [],
   socials: [],
+  githubUsername: "",
+  githubStats: null,
 };

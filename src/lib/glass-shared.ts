@@ -1,8 +1,23 @@
 import type { Ctx2D, TemplateTheme } from "./types";
 import { rgba, roundRect } from "./canvas-utils";
 
+// Fixed text colors for the glass family. Glass templates use a mesh-gradient
+// background with a dark vignette, so a near-white body text and a slightly
+// dimmer secondary tone read consistently on top regardless of which mesh
+// colors the user picks. Text colors are intentionally NOT routed through
+// theme.fg / theme.muted -- those control mesh blobs (see drawGlassBackground).
+export const GLASS_TEXT = "#f5f5f7";
+export const GLASS_TEXT_MUTED = "#a8a8b3";
+
 // Shared background renderer for all "glass" family canvas templates.
 // Draws: solid base, blurred mesh blobs (animated), vignette, subtle particles.
+//
+// The three mesh blobs are driven by:
+//   blob 1 -> theme.accent
+//   blob 2 -> theme.fg
+//   blob 3 -> theme.muted
+// This lets the user dial in every "spacy" color through the editor's color
+// pickers. The fg/muted swatches no longer affect text rendering in glass.
 export function drawGlassBackground(
   ctx: Ctx2D,
   t: number,
@@ -22,8 +37,8 @@ export function drawGlassBackground(
   ctx.filter = "blur(60px)";
   const blobs: { color: string; bx: number; by: number; r: number; spd: number }[] = [
     { color: theme.accent, bx: W * 0.28, by: H * 0.55, r: 220, spd: 1 },
-    { color: "#22d3ee", bx: W * 0.72, by: H * 0.45, r: 240, spd: 0.8 },
-    { color: "#f472b6", bx: W * 0.5, by: H * 1.05, r: 200, spd: 1.2 },
+    { color: theme.fg, bx: W * 0.72, by: H * 0.45, r: 240, spd: 0.8 },
+    { color: theme.muted, bx: W * 0.5, by: H * 1.05, r: 200, spd: 1.2 },
   ];
   for (const b of blobs) {
     const x = b.bx + Math.cos(phase * b.spd) * 60;

@@ -277,7 +277,7 @@ function renderSvg(
 
   <!-- Status indicator (bottom right of frame) -->
   <g transform="translate(${frameRight - 14} ${statusY})">
-    <text x="-12" y="3" text-anchor="end" fill="${muted}" font-family="ui-monospace, monospace" font-size="10" letter-spacing="1.5">STATUS: ONLINE</text>
+    <text x="-12" y="3" text-anchor="end" fill="${muted}" font-family="ui-monospace, monospace" font-size="10" letter-spacing="1.5">STATUS: ENGAGED</text>
     <circle class="status-dot" cx="-4" cy="0" r="3" fill="${accent}" filter="drop-shadow(0 0 5px ${accent})"/>
   </g>
 

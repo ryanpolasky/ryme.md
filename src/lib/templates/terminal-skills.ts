@@ -64,7 +64,11 @@ function computeLayout(info: ProfileInfo) {
   const HEADER_LINES = 2; // command + blank/echo line
   const headerH = HEADER_LINES * LINE_H;
   const chipsH = rowCount === 0 ? 0 : rowCount * LINE_H + (rowCount - 1) * ROW_GAP;
-  const FOOTER_H = LINE_H + 28; // trailing prompt + bottom padding
+  // FOOTER_H must cover (a) the gap from chips to the prompt baseline (LINE_H + 8),
+  // (b) the prompt line itself (LINE_H), and (c) breathing room below the cursor
+  // so the blinking caret doesn't kiss the bottom edge.
+  const FOOTER_BOTTOM_PAD = 28;
+  const FOOTER_H = LINE_H * 2 + 8 + FOOTER_BOTTOM_PAD;
   const H = TOP + headerH + 16 + chipsH + FOOTER_H;
 
   return {

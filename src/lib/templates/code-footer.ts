@@ -226,7 +226,7 @@ function renderSvg(
   <g fill="${statusFg}" font-family="ui-monospace, monospace" font-size="11">
     <text x="${PAD_X}" y="${H - STATUS_H / 2 + 1}" dominant-baseline="middle">⎇ main</text>
     <text x="${PAD_X + 64}" y="${H - STATUS_H / 2 + 1}" dominant-baseline="middle" opacity="0.85">⊘ 0   ⚠ 0</text>
-    <text x="${W - PAD_X}" y="${H - STATUS_H / 2 + 1}" dominant-baseline="middle" text-anchor="end">UTF-8 · LF · Markdown</text>
+    <text x="${W - PAD_X}" y="${H - STATUS_H / 2 + 1}" dominant-baseline="middle" text-anchor="end">UTF-8 · LF · Markdown · ryme.md</text>
   </g>
 </svg>`;
 }

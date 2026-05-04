@@ -42,7 +42,7 @@ function renderSvg(
   // for absurd inputs.
   const INNER_W = W - PAD * 2 - 16;
   const titleFit = fitFontSize(
-    info.name ? `Hi, I'm ${info.name}` : "About me",
+    info.name ? `Hi, I'm ${info.name}.` : "About me.",
     INNER_W,
     [32, 28, 24, 20],
     "sans",
@@ -221,7 +221,6 @@ function renderSvg(
   <text class="heading" x="${PAD + 8}" y="${HEADING_Y}" fill="${theme.fg}" font-family='"Inter", system-ui, sans-serif' font-size="${titleSize}" font-weight="700">${escapeXml(titleText)}</text>
   <text class="bio" x="${PAD + 8}" y="${BIO_Y}" fill="${theme.muted}" font-family='"Inter", system-ui, sans-serif' font-size="15" font-weight="400">${bioTspans}</text>
   ${pillsSvg}
-  <text x="${W - 18}" y="${H - 14}" fill="${theme.muted}" fill-opacity="0.4" font-family="ui-monospace, monospace" font-size="10" text-anchor="end">made with RyMe.md</text>
 </svg>`;
 }
 

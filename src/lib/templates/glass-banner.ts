@@ -6,6 +6,8 @@ import type {
 } from "../types";
 import { SANS, fitFontSize, rgba } from "../canvas-utils";
 import {
+  GLASS_TEXT,
+  GLASS_TEXT_MUTED,
   drawCanvasFrame,
   drawGlassBackground,
   drawGlassCard,
@@ -62,7 +64,7 @@ function renderFrame(
   lines.push({
     text: nameFit.text,
     font: nameFit.font,
-    fill: theme.fg,
+    fill: GLASS_TEXT,
     cap: nameCap,
     desc: nameDesc,
     gapBefore: 0,
@@ -80,7 +82,7 @@ function renderFrame(
     lines.push({
       text: subFit.text,
       font: subFit.font,
-      fill: theme.muted,
+      fill: GLASS_TEXT_MUTED,
       cap: Math.round(subFit.size * 0.74),
       desc: Math.round(subFit.size * 0.22),
       gapBefore: 36,
@@ -97,7 +99,7 @@ function renderFrame(
     lines.push({
       text: tagFit.text,
       font: tagFit.font,
-      fill: rgba(theme.fg, 0.7),
+      fill: rgba(GLASS_TEXT, 0.7),
       cap: Math.round(tagFit.size * 0.74),
       desc: Math.round(tagFit.size * 0.22),
       gapBefore: 28,

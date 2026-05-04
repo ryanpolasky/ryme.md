@@ -15,14 +15,19 @@ type Props = {
 };
 
 // "Short" fields render in a 2-col grid; "wide" fields are full width.
-const SHORT: InfoField[] = ["name", "role", "org", "location"];
+// Tuple typed `as const` so `ShortField` resolves to the precise union of
+// ProfileInfo string keys the inline grid actually edits -- which keeps
+// `info[f]` strongly typed even as new InfoField values (e.g., "github")
+// get added that don't map to a single string property on ProfileInfo.
+const SHORT = ["name", "role", "org", "location"] as const;
+type ShortField = (typeof SHORT)[number];
 
 export function SectionInputs({ fields, info, onChange }: Props) {
   const has = (f: InfoField) => fields.includes(f);
   const set = <K extends keyof ProfileInfo>(k: K, v: ProfileInfo[K]) =>
     onChange({ ...info, [k]: v });
 
-  const shortFields = SHORT.filter(has);
+  const shortFields: ShortField[] = SHORT.filter(has);
 
   return (
     <div className="space-y-3 pt-3 border-t border-[var(--color-border)] min-w-0">
@@ -46,10 +51,8 @@ export function SectionInputs({ fields, info, onChange }: Props) {
             <div key={f} className="min-w-0">
               <FieldLabel field={f} />
               <Input
-                value={(info[f] as string) ?? ""}
-                onChange={(e) =>
-                  set(f as "name" | "role" | "org" | "location", e.target.value)
-                }
+                value={info[f] ?? ""}
+                onChange={(e) => set(f, e.target.value)}
                 placeholder={INFO_FIELD_META[f].placeholder}
               />
             </div>
@@ -98,6 +101,33 @@ export function SectionInputs({ fields, info, onChange }: Props) {
             socials={info.socials}
             onChange={(next: Social[]) => onChange({ ...info, socials: next })}
           />
+        </div>
+      )}
+
+      {has("github") && (
+        <div className="min-w-0">
+          <FieldLabel field="github" />
+          <div className="rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-2.5 text-xs text-[var(--color-text-muted)] min-w-0">
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+              <span className="font-mono leading-relaxed break-words min-w-0">
+                {info.githubUsername
+                  ? `@${info.githubUsername}`
+                  : "Use the GitHub loader above to fetch stats."}
+              </span>
+              <span className="font-mono text-[10px] uppercase tracking-[0.08em] text-[var(--color-text-dim)] shrink-0 self-start">
+                {info.githubStats?.source ?? "not loaded"}
+              </span>
+            </div>
+            {info.githubStats && (
+              <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 font-mono text-[10px] text-[var(--color-text-dim)]">
+                <span>{info.githubStats.profile.publicRepos} repos</span>
+                <span>
+                  {info.githubStats.totals.commitsThisYear ?? "—"} commits
+                </span>
+                <span>{info.githubStats.languages[0]?.name ?? "—"} top lang</span>
+              </div>
+            )}
+          </div>
         </div>
       )}
     </div>

@@ -86,6 +86,11 @@ export function cleanInfo(info: ProfileInfo): ProfileInfo {
         value: cleanSocialValue(s.value),
       }),
     ),
+    // GitHub username is just a single-line text field; same hygiene as
+    // name / role. Stats are already-structured fetched data; we pass them
+    // through unchanged because mutating them would lie about the fetch.
+    githubUsername: cleanLine(info.githubUsername),
+    githubStats: info.githubStats,
   };
 }
 

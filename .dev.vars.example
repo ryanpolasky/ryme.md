@@ -1,0 +1,7 @@
+# Local-only env for `wrangler pages dev`. Copy to `.dev.vars` (gitignored)
+# and fill in real values. Production reads these same names from
+# Cloudflare Pages > Settings > Environment variables.
+GITHUB_TOKEN=
+
+# Optional to override the function's KV cache TTL (seconds)
+# STATS_CACHE_TTL=3600

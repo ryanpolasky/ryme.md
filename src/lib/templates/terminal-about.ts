@@ -177,7 +177,6 @@ function renderSvg(
   </g>
   <text x="${W / 2}" y="28" fill="${dim}" font-family="ui-monospace, monospace" font-size="11" text-anchor="middle">~ / about.md</text>
   ${animatedRows.join("\n  ")}
-  <text x="${W - 18}" y="${H - 14}" fill="${dim}" fill-opacity="0.5" font-family="ui-monospace, monospace" font-size="10" text-anchor="end"># made with RyMe.md</text>
 </svg>`;
 }
 

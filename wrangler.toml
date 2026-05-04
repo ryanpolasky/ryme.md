@@ -1,0 +1,6 @@
+name = "readme-ryvamper"
+compatibility_date = "2026-04-01"
+
+[[kv_namespaces]]
+binding = "STATS_CACHE"
+id      = "1f156f42b9b342edaa4a607e93e5f8f9"

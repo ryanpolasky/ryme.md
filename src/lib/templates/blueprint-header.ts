@@ -5,6 +5,7 @@ import type {
   TemplateTheme,
 } from "../types";
 import { fitFontSize } from "../text-utils";
+import { sheetIndexLabel } from "./blueprint-shared";
 
 const escapeXml = (s: string) =>
   s
@@ -66,6 +67,7 @@ function renderSvg(
   options?: RenderOptions,
 ): string {
   const loopText = options?.loopText ?? true;
+  const sheetLabel = sheetIndexLabel(options, "header");
   const W = 800;
   const H = 300;
   const cx = W / 2;
@@ -166,7 +168,7 @@ function renderSvg(
     { label: "DATE", value: "26.10" },
     { label: "SCALE", value: "1:1" },
     { label: "REV", value: "1.0" },
-    { label: "SHEET", value: "01 / 03" },
+    { label: "SHEET", value: sheetLabel },
   ]
     .map((c, i) => {
       const x = titleBlockX + i * cellW;
@@ -234,7 +236,7 @@ function renderSvg(
   // The figure label conventionally pairs with the kind of drawing — for a
   // header chrome this is FIG. 01 PROFILE.
   const topLeftLabel = "FIG. 01    PROFILE";
-  const topRightLabel = "SHEET 01 / 03";
+  const topRightLabel = `SHEET ${sheetLabel}`;
 
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">
   <style>${css}</style>

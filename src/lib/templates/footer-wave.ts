@@ -273,6 +273,9 @@ function renderSvg(
   <text class="signoff" x="${cx}" y="${signoffY}" text-anchor="middle" fill="${theme.fg}" font-family='"Inter", system-ui, sans-serif' font-size="${signoffSize}" font-weight="500">${escapeXml(signoffText).replace("♥", `<tspan class="heart" fill="${theme.accent}">♥</tspan>`)}</text>
 
   ${socialsSvg}
+
+  <!-- ryme.md attribution: low-opacity mono credit in the bottom-right. -->
+  <text x="${W - 18}" y="${H - 12}" fill="${theme.muted}" fill-opacity="0.4" font-family="ui-monospace, monospace" font-size="10" text-anchor="end">made with ryme.md</text>
 </svg>`;
 }
 

@@ -213,9 +213,6 @@ function renderSvg(
 
   <!-- Pill rows -->
   ${chipsSvg}
-
-  <!-- Tiny watermark -->
-  <text x="${W - 20}" y="${H - 14}" fill="${theme.muted}" fill-opacity="0.45" font-family="ui-monospace, monospace" font-size="10" text-anchor="end">made with RyMe.md</text>
 </svg>`;
 }
 

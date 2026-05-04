@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { ChevronDown } from "lucide-react";
 import type { ProfileInfo, Section } from "../lib/types";
 import { getTemplate } from "../lib/templates";
@@ -10,8 +10,23 @@ type Props = {
 };
 
 export function CombinedReadme({ sections, info, filenameFor }: Props) {
-  const [handle, setHandle] = useState("");
+  // the snippet handle defaults to the github username already entered in
+  // the profile section. the user can still override it locally; once they
+  // type something different, we stop tracking the profile field (otherwise
+  // their override would be clobbered every time profile state updates).
+  const profileHandle = info.githubUsername.trim();
+  const [handle, setHandle] = useState(profileHandle);
   const [open, setOpen] = useState(false);
+  const dirtyRef = useRef(false);
+
+  useEffect(() => {
+    if (!dirtyRef.current) setHandle(profileHandle);
+  }, [profileHandle]);
+
+  const onHandleChange = (next: string) => {
+    dirtyRef.current = true;
+    setHandle(next);
+  };
 
   const cleanHandle = handle.trim().replace(/^@/, "") || "USERNAME";
   const base = `https://raw.githubusercontent.com/${cleanHandle}/${cleanHandle}/main`;
@@ -74,7 +89,7 @@ export function CombinedReadme({ sections, info, filenameFor }: Props) {
             </p>
             <input
               value={handle}
-              onChange={(e) => setHandle(e.target.value)}
+              onChange={(e) => onHandleChange(e.target.value)}
               placeholder="github handle"
               className="text-[11px] font-mono bg-[var(--color-surface-2)] border border-[var(--color-border)] rounded px-2 py-1 w-32 text-[var(--color-text)] placeholder:text-[var(--color-text-dim)] focus:outline-none focus:border-[var(--color-accent)]"
             />

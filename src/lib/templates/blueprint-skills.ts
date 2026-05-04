@@ -5,6 +5,7 @@ import type {
   TemplateTheme,
 } from "../types";
 import { fitUniformFontSize, truncateToWidth } from "../text-utils";
+import { sheetIndexLabel } from "./blueprint-shared";
 
 const escapeXml = (s: string) =>
   s
@@ -95,9 +96,10 @@ function renderSvg(
   loopDuration: number,
   options?: RenderOptions,
 ): string {
-  // Blueprint is calm: no text-fade animation. Args kept for shape parity.
+  // Blueprint is calm: no text-fade animation. loopDuration is kept for
+  // shape parity; options is consumed for the dynamic sheet index.
   void loopDuration;
-  void options;
+  const sheetLabel = sheetIndexLabel(options, "skills");
 
   const accent = theme.accent;
   const muted = theme.muted;
@@ -216,16 +218,14 @@ function renderSvg(
   <!-- Title strip -->
   <line x1="${sheetX + 8}" y1="${titleStripY + TITLE_STRIP_H}" x2="${sheetRight - 8}" y2="${titleStripY + TITLE_STRIP_H}" stroke="${muted}" stroke-width="0.6" stroke-opacity="0.55"/>
   <text x="${sheetX + 14}" y="${titleStripY + 14}" fill="${fg}" font-family="ui-monospace, monospace" font-size="11" letter-spacing="2.2">${escapeXml(titleLabel)}</text>
-  <text x="${sheetRight - 14}" y="${titleStripY + 14}" text-anchor="end" fill="${muted}" font-family="ui-monospace, monospace" font-size="10" letter-spacing="1.4">SHEET 02 · QTY ${skills.length.toString().padStart(2, "0")}</text>
+  <text x="${sheetRight - 14}" y="${titleStripY + 14}" text-anchor="end" fill="${muted}" font-family="ui-monospace, monospace" font-size="10" letter-spacing="1.4">SHEET ${sheetLabel} · QTY ${skills.length.toString().padStart(2, "0")}</text>
 
   <!-- BOM table -->
   ${headersSvg}
   ${bodySvg}
   ${emptySvg}
 
-  <!-- Bottom drafting credit line -->
-  <line x1="${sheetX + 8}" y1="${sheetBottom - 14}" x2="${sheetRight - 8}" y2="${sheetBottom - 14}" stroke="${muted}" stroke-width="0.4" stroke-opacity="0.4"/>
-  <text x="${sheetX + 14}" y="${sheetBottom - 4}" fill="${muted}" font-family="ui-monospace, monospace" font-size="9" letter-spacing="1.2">DRAFTED ON RYME.MD</text>
+
 </svg>`;
 }
 
