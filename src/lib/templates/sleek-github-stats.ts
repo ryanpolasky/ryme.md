@@ -70,11 +70,20 @@ function renderSvg(
   const statSvg = cards
     .map((c, i) => {
       const x = PAD + i * (STATS_COL_W + STATS_GAP);
-      // label baseline = STATS_TOP, value baseline = +38, hint baseline = +60.
-      return `<g class="stat s${i}" transform="translate(${x} ${STATS_TOP})">
-      <text x="0" y="0" fill="${muted}" font-family="ui-monospace, monospace" font-size="10" letter-spacing="2">${escapeXml(c.label.toUpperCase())}</text>
-      <text x="0" y="38" fill="${fg}" font-family='"Inter", system-ui, sans-serif' font-size="34" font-weight="700" letter-spacing="-1">${escapeXml(c.value)}</text>
-      <text x="0" y="60" fill="${muted}" font-family='"Inter", system-ui, sans-serif' font-size="11" font-weight="400">${escapeXml(c.hint)}</text>
+      // The outer `<g>` carries the SVG `transform` attribute that puts
+      // the tile at its grid slot; the inner `<g>` carries the
+      // `.stat`/`.s{i}` classes whose `fadeUp` animation manipulates
+      // CSS `transform`. They have to live on different elements: a CSS
+      // `transform` on an SVG element fully *replaces* any `transform`
+      // attribute already on that element (it doesn't compose), so when
+      // both lived on the same `<g>` the animation snapped every tile
+      // back to (0, 0) and they stacked in the top-left corner.
+      return `<g transform="translate(${x} ${STATS_TOP})">
+      <g class="stat s${i}">
+        <text x="0" y="0" fill="${muted}" font-family="ui-monospace, monospace" font-size="10" letter-spacing="2">${escapeXml(c.label.toUpperCase())}</text>
+        <text x="0" y="38" fill="${fg}" font-family='"Inter", system-ui, sans-serif' font-size="34" font-weight="700" letter-spacing="-1">${escapeXml(c.value)}</text>
+        <text x="0" y="60" fill="${muted}" font-family='"Inter", system-ui, sans-serif' font-size="11" font-weight="400">${escapeXml(c.hint)}</text>
+      </g>
     </g>`;
     })
     .join("\n  ");
