@@ -207,6 +207,9 @@ function Editor() {
           <CombinedReadme
             sections={sections}
             info={info}
+            globalTheme={globalTheme}
+            loopDuration={loopDuration}
+            loopText={loopText}
             filenameFor={filenameFor}
           />
         </aside>

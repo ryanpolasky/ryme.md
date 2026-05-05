@@ -2,8 +2,16 @@
   "compilerOptions": {
     "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.functions.tsbuildinfo",
     "target": "es2023",
-    "lib": ["ES2023", "WebWorker"],
+    // DOM is included so that types from `src/lib/types.ts` (Ctx2D ->
+    // CanvasRenderingContext2D / OffscreenCanvasRenderingContext2D) and
+    // any browser-only types pulled in transitively via the `src/lib/
+    // templates` barrel resolve at type-check time. These are pure type
+    // references; esbuild/wrangler tree-shake the unreachable runtime
+    // code (canvas-only paths, the React `SocialIcon` component, etc.)
+    // out of the worker bundle.
+    "lib": ["ES2023", "WebWorker", "DOM"],
     "module": "esnext",
+    "jsx": "react-jsx",
     "types": ["@cloudflare/workers-types"],
     "skipLibCheck": true,
 

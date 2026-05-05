@@ -1,88 +1,96 @@
 import type {
-  CanvasTemplate,
-  Ctx2D,
   ProfileInfo,
+  RenderOptions,
+  SvgTemplate,
   TemplateTheme,
 } from "../types";
-import { SANS, fitFontSize, rgba } from "../canvas-utils";
+import { fitFontSize } from "../text-utils";
 import {
   GLASS_TEXT,
   GLASS_TEXT_MUTED,
-  drawCanvasFrame,
-  drawGlassBackground,
-  drawGlassCard,
-} from "../glass-shared";
+  escapeXml,
+  glassBackground,
+  glassCard,
+  glassDefs,
+  glassFrame,
+  glassStyles,
+} from "../glass-svg-shared";
 
-function renderFrame(
-  ctx: Ctx2D,
-  t: number,
+/**
+ * Glass Banner -- header SVG.
+ *
+ * Drifting mesh-gradient backdrop with a frosted card centered in the
+ * canvas. The card carries up to three text rows:
+ *
+ *   1. Name              (large, semibold, near-white)
+ *   2. role  ·  org      (mid-weight, slightly dimmer)
+ *   3. tagline           (italic, even dimmer)
+ *
+ * Vertical centering uses cap-height + descender bookkeeping rather than
+ * raw font size so different combinations of present/absent rows always
+ * end up optically centered.
+ */
+function renderSvg(
   info: ProfileInfo,
   theme: TemplateTheme,
   loopDuration: number,
-) {
+  options?: RenderOptions,
+): string {
+  const loopText = options?.loopText ?? true;
   const W = 800;
   const H = 300;
 
-  drawGlassBackground(ctx, t, loopDuration, theme, W, H);
-
-  // Glass card
+  // Glass card geometry: 660x200, centered.
   const cardW = 660;
   const cardH = 200;
   const cardX = (W - cardW) / 2;
   const cardY = (H - cardH) / 2;
-  drawGlassCard(ctx, cardX, cardY, cardW, cardH, 18);
+  const TEXT_BUDGET = cardW - 64; // 32 px padding either side
 
-  // Build the list of lines to render so we can center them in the card
-  // regardless of which optional fields are present. Each entry carries the
-  // visual cap height above and descender below its baseline so we can
-  // compute the block's true visual extent.
+  // ---- Lines + per-line vertical metrics so the block can be centered. ----
   type Line = {
     text: string;
-    font: string;
     fill: string;
+    size: number;
+    weight: number;
+    italic: boolean;
     cap: number;
     desc: number;
     gapBefore: number;
   };
   const lines: Line[] = [];
 
-  // Inner width budget for text inside the glass card (with side padding).
-  const TEXT_BUDGET = cardW - 64;
-
-  // Auto-shrink the name through 38 → 32 → 28 → 24 px. At the smallest
-  // size the helper will truncate with an ellipsis rather than overflow.
   const nameFit = fitFontSize(
-    ctx,
     info.name || "Your Name",
     TEXT_BUDGET,
-    (s) => `600 ${s}px ${SANS}`,
     [38, 32, 28, 24],
+    "sans",
   );
-  // Visual cap height tracks the fitted size (~0.74em for Inter-style).
-  const nameCap = Math.round(nameFit.size * 0.74);
-  const nameDesc = Math.round(nameFit.size * 0.18);
   lines.push({
     text: nameFit.text,
-    font: nameFit.font,
     fill: GLASS_TEXT,
-    cap: nameCap,
-    desc: nameDesc,
+    size: nameFit.size,
+    weight: 600,
+    italic: false,
+    cap: Math.round(nameFit.size * 0.74),
+    desc: Math.round(nameFit.size * 0.18),
     gapBefore: 0,
   });
 
   const subtitleParts = [info.role, info.org].filter(Boolean);
   if (subtitleParts.length) {
     const subFit = fitFontSize(
-      ctx,
       subtitleParts.join("  ·  "),
       TEXT_BUDGET,
-      (s) => `500 ${s}px ${SANS}`,
       [15, 14, 13, 12],
+      "sans",
     );
     lines.push({
       text: subFit.text,
-      font: subFit.font,
       fill: GLASS_TEXT_MUTED,
+      size: subFit.size,
+      weight: 500,
+      italic: false,
       cap: Math.round(subFit.size * 0.74),
       desc: Math.round(subFit.size * 0.22),
       gapBefore: 36,
@@ -90,58 +98,68 @@ function renderFrame(
   }
   if (info.tagline) {
     const tagFit = fitFontSize(
-      ctx,
       info.tagline,
       TEXT_BUDGET,
-      (s) => `italic 400 ${s}px ${SANS}`,
       [13, 12, 11],
+      "sans",
     );
     lines.push({
       text: tagFit.text,
-      font: tagFit.font,
-      fill: rgba(GLASS_TEXT, 0.7),
+      // 70% of GLASS_TEXT (#f5f5f7) baked at 0.7 opacity via separate attribute.
+      fill: GLASS_TEXT,
+      size: tagFit.size,
+      weight: 400,
+      italic: true,
       cap: Math.round(tagFit.size * 0.74),
       desc: Math.round(tagFit.size * 0.22),
       gapBefore: 28,
     });
   }
 
-  // Total block extent (top of first cap to bottom of last descender)
+  // Block extent: top of first cap → bottom of last descender.
   let blockH = lines[0].cap;
   for (let i = 1; i < lines.length; i++) blockH += lines[i].gapBefore;
   blockH += lines[lines.length - 1].desc;
 
+  const cx = W / 2;
   const cardCenterY = cardY + cardH / 2;
-  // First baseline so the block centers vertically inside the card
   let ty = cardCenterY - blockH / 2 + lines[0].cap;
 
-  const cx = W / 2;
-  ctx.textAlign = "center";
-  ctx.textBaseline = "alphabetic";
+  const textNodes: string[] = [];
   for (let i = 0; i < lines.length; i++) {
     if (i > 0) ty += lines[i].gapBefore;
-    ctx.font = lines[i].font;
-    ctx.fillStyle = lines[i].fill;
-    ctx.fillText(lines[i].text, cx, ty);
+    const l = lines[i];
+    const fontStyle = l.italic ? "italic " : "";
+    // Tagline gets opacity 0.7 to match the canvas original (rgba 0.7).
+    const opacity = i === 2 ? ` opacity="0.7"` : "";
+    textNodes.push(
+      `<text x="${cx}" y="${ty}" text-anchor="middle" fill="${l.fill}" font-family='"Inter", system-ui, -apple-system, sans-serif' font-size="${l.size}" font-weight="${l.weight}" font-style="${fontStyle.trim() || "normal"}"${opacity}>${escapeXml(l.text)}</text>`,
+    );
   }
 
-  drawCanvasFrame(ctx, W, H, 14);
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">
+  <style>${glassStyles(loopDuration, loopText)}</style>
+  <defs>${glassDefs(theme)}</defs>
+  ${glassBackground(W, H, theme)}
+  ${glassCard(cardX, cardY, cardW, cardH, 18)}
+  ${textNodes.join("\n  ")}
+  ${glassFrame(W, H, 14)}
+</svg>`;
 }
 
-const template: CanvasTemplate = {
+const template: SvgTemplate = {
   id: "glass-header",
   name: "Glass Banner",
   description:
-    "Animated mesh gradient drifting behind a glassmorphic card. Renders to GIF.",
-  kind: "canvas",
+    "Drifting mesh-gradient backdrop with a frosted glass card carrying your name, role, and tagline.",
+  kind: "svg",
   category: "header",
   family: "glass",
   width: 800,
   height: 300,
-  fps: 24,
   duration: 8,
   fields: ["name", "role", "org", "tagline"],
-  renderFrame,
+  renderSvg,
 };
 
 export default template;

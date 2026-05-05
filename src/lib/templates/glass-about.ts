@@ -1,24 +1,38 @@
 import type {
-  CanvasTemplate,
-  Ctx2D,
   ProfileInfo,
+  RenderOptions,
+  SvgTemplate,
   TemplateTheme,
 } from "../types";
 import {
-  MONO,
-  SANS,
+  CHAR_WIDTH_EM,
   fitFontSize,
   fitUniformFontSize,
-  rgba,
-  roundRect,
-  wrapTextByWidth,
-} from "../canvas-utils";
+  wrapByChars,
+} from "../text-utils";
+import { chipWidth } from "../chip-layout";
 import {
   GLASS_TEXT,
-  drawCanvasFrame,
-  drawGlassBackground,
-  drawGlassCard,
-} from "../glass-shared";
+  escapeXml,
+  glassBackground,
+  glassCard,
+  glassDefs,
+  glassFrame,
+  glassStyles,
+} from "../glass-svg-shared";
+
+/**
+ * Glass About -- biography card.
+ *
+ * Heading row ("Hi, I'm {name}" or "About me") + multi-line bio + a row
+ * of pill tags drawn from role / org / location. The whole thing is
+ * vertically centered inside a wide glass panel so present-or-absent rows
+ * never leave the layout looking lopsided.
+ *
+ * Word-wrap uses the character-count heuristic (`wrapByChars`) since SVG
+ * has no DOM `measureText`. The proportional-sans width estimate is
+ * slightly conservative -- we'd rather under-fill a line than overflow.
+ */
 
 function pillRow(info: ProfileInfo): string[] {
   const out: string[] = [];
@@ -28,65 +42,54 @@ function pillRow(info: ProfileInfo): string[] {
   return out;
 }
 
-function renderFrame(
-  ctx: Ctx2D,
-  t: number,
+function renderSvg(
   info: ProfileInfo,
   theme: TemplateTheme,
   loopDuration: number,
-) {
+  options?: RenderOptions,
+): string {
+  const loopText = options?.loopText ?? true;
   const W = 800;
   const H = 320;
 
-  drawGlassBackground(ctx, t, loopDuration, theme, W, H);
-
-  // Glass card
+  // Card geometry: 30 px inset on every side.
   const PAD = 30;
   const cardW = W - PAD * 2;
   const cardH = H - PAD * 2;
   const cardX = PAD;
   const cardY = PAD;
-  drawGlassCard(ctx, cardX, cardY, cardW, cardH, 18);
 
-  ctx.textBaseline = "alphabetic";
-  ctx.textAlign = "left";
   const innerX = cardX + 32;
   const innerW = cardW - 64;
 
-  // Heading auto-shrinks 28 → 24 → 20 → 16 px to fit innerW. Truncates only
-  // at 16 px for absurd inputs.
+  // Heading auto-shrinks 28 → 24 → 20 → 16. Identical sizes to the canvas.
   const headingFit = fitFontSize(
-    ctx,
     info.name ? `Hi, I'm ${info.name}` : "About me",
     innerW,
-    (s) => `700 ${s}px ${SANS}`,
     [28, 24, 20, 16],
+    "sans",
   );
   const headingText = headingFit.text;
   const headingSize = headingFit.size;
-  ctx.font = `400 14px ${SANS}`;
-  const bio = info.bio || info.tagline || "";
-  const bioLines = wrapTextByWidth(ctx, bio, innerW, 4);
+
+  // Bio: wrap to ≤4 lines at 14 px sans. innerW / (14 * 0.55) ≈ 87 chars.
+  const BIO_SIZE = 14;
+  const bioMaxChars = Math.floor(innerW / (BIO_SIZE * CHAR_WIDTH_EM.sans));
+  const bioLines = wrapByChars(info.bio || info.tagline || "", bioMaxChars, 4);
+
   const pills = pillRow(info);
 
-  // Visual extents — heading metrics scale with the fitted size; bio/pill
-  // metrics are fixed at their default sizes (only the heading shrinks
-  // dramatically).
-  //   bio 14px font line height 22, descender ~5
-  //   pill rect height 20 (top ~ baseline-12, bottom ~ baseline+8)
+  // Vertical metrics. The canvas template uses heading-cap = 0.75em,
+  // descender = 0.21em; we keep those to preserve the spatial rhythm.
   const HEADING_CAP = Math.round(headingSize * 0.75);
   const HEADING_DESC = Math.round(headingSize * 0.21);
-  const HEADING_TO_BIO = 40;        // heading baseline -> first bio baseline
+  const HEADING_TO_BIO = 40;
   const BIO_LINE_H = 22;
   const BIO_DESC = 5;
-  const BIO_TO_PILL = 30;           // last bio baseline -> pill baseline
-  const HEADING_TO_PILL = 50;       // heading baseline -> pill baseline (no bio)
+  const BIO_TO_PILL = 30;
+  const HEADING_TO_PILL = 50;
   const PILL_BELOW_BASELINE = 8;
 
-  // Compute block height (top of heading cap to bottom of last element).
-  // Block contains:
-  //   heading -> [bio lines] -> [pills]
-  // Use baseline-to-baseline offsets to keep math consistent with rendering.
   let blockH = HEADING_CAP + HEADING_DESC;
   if (bioLines.length) {
     blockH =
@@ -107,96 +110,121 @@ function renderFrame(
 
   const cardCenterY = cardY + cardH / 2;
   let ty = Math.round(cardCenterY - blockH / 2 + HEADING_CAP);
+  const headingY = ty;
 
-  // Heading
-  ctx.fillStyle = GLASS_TEXT;
-  ctx.font = `700 ${headingSize}px ${SANS}`;
-  ctx.fillText(headingText, innerX, ty);
-
-  // Bio
+  // Bio baselines, then last bio baseline becomes our pill anchor.
+  const bioYs: number[] = [];
   if (bioLines.length) {
-    ctx.fillStyle = rgba(GLASS_TEXT, 0.75);
-    ctx.font = `400 14px ${SANS}`;
     let bioY = ty + HEADING_TO_BIO;
     for (let i = 0; i < bioLines.length; i++) {
-      ctx.fillText(bioLines[i], innerX, bioY);
+      bioYs.push(bioY);
       bioY += BIO_LINE_H;
     }
-    ty = bioY - BIO_LINE_H; // last bio baseline
+    ty = bioY - BIO_LINE_H;
   }
 
-  // Pill row. Find the largest font size at which all pills fit side-by-side
-  // within innerW. Smaller sizes mean narrower pills, which lets us keep
-  // every pill visible and readable rather than ellipsing words mid-acronym.
+  // ---- Pills ---------------------------------------------------------------
+  // Find a font size at which all pills fit on a single row of innerW.
+  // Mirrors the canvas template's [11, 10, 9, 8] ladder.
+  type PillRendered = { text: string; w: number; size: number; pad: number };
+  const pillData: PillRendered[] = [];
+  let pillSize = 8;
+  let pillPad = 8;
+  let pillHeight = 18;
+
   if (pills.length) {
-    const pillY = bioLines.length ? ty + BIO_TO_PILL : ty + HEADING_TO_PILL;
     const PILL_GAP = 8;
     const sizes = [11, 10, 9, 8];
-    let pillSize = sizes[sizes.length - 1];
     for (const s of sizes) {
-      ctx.font = `500 ${s}px ${MONO}`;
       const padX = Math.max(8, Math.round(s * 0.85));
-      const widths = pills.map(
-        (p) => Math.round(ctx.measureText(p).width) + padX * 2,
-      );
-      const total = widths.reduce((sum, w) => sum + w, 0) + (pills.length - 1) * PILL_GAP;
-      if (total <= innerW) {
-        pillSize = s;
-        break;
-      }
+      const widths = pills.map((p) => chipWidth(p, s, padX, "mono"));
+      const total =
+        widths.reduce((sum, w) => sum + w, 0) + (pills.length - 1) * PILL_GAP;
       pillSize = s;
+      pillPad = padX;
+      if (total <= innerW) break;
     }
-    const PILL_PAD = Math.max(8, Math.round(pillSize * 0.85));
-    const PILL_HEIGHT = Math.max(18, Math.round(pillSize * 1.83));
-    // At the chosen size, cap each pill by the per-row budget derived from
-    // the number of pills so the whole row remains inside innerW.
+    pillHeight = Math.max(18, Math.round(pillSize * 1.83));
+
+    // Per-pill character cap so the row stays inside innerW even at the
+    // smallest font size when several long labels are present.
     const perPillCap = Math.max(
       80,
       Math.floor((innerW - (pills.length - 1) * PILL_GAP) / pills.length),
     );
-    ctx.font = `500 ${pillSize}px ${MONO}`;
-    const pillFit = fitUniformFontSize(
-      ctx,
+    const fitted = fitUniformFontSize(
       pills,
       perPillCap,
-      (s) => `500 ${s}px ${MONO}`,
       [pillSize],
+      "mono",
     );
-    const pillData = pillFit.texts.map((trimmed) => ({
-      text: trimmed,
-      width: Math.round(ctx.measureText(trimmed).width) + PILL_PAD * 2,
-    }));
-    let px = innerX;
-    for (const d of pillData) {
-      roundRect(ctx, px, pillY - PILL_HEIGHT / 2 - 1, d.width, PILL_HEIGHT, PILL_HEIGHT / 2);
-      ctx.fillStyle = rgba(theme.accent, 0.18);
-      ctx.fill();
-      ctx.strokeStyle = rgba(theme.accent, 0.5);
-      ctx.lineWidth = 1;
-      ctx.stroke();
-      ctx.fillStyle = GLASS_TEXT;
-      ctx.fillText(d.text, px + PILL_PAD, pillY + 1);
-      px += d.width + PILL_GAP;
+    for (const text of fitted.texts) {
+      pillData.push({
+        text,
+        w: chipWidth(text, pillSize, pillPad, "mono"),
+        size: pillSize,
+        pad: pillPad,
+      });
     }
   }
 
-  drawCanvasFrame(ctx, W, H, 14);
+  // ---- Render --------------------------------------------------------------
+
+  const headingNode = `<text x="${innerX}" y="${headingY}" fill="${GLASS_TEXT}" font-family='"Inter", system-ui, sans-serif' font-size="${headingSize}" font-weight="700">${escapeXml(headingText)}</text>`;
+
+  const bioNodes = bioLines
+    .map(
+      (line, i) =>
+        `<text x="${innerX}" y="${bioYs[i]}" fill="${GLASS_TEXT}" opacity="0.75" font-family='"Inter", system-ui, sans-serif' font-size="${BIO_SIZE}" font-weight="400">${escapeXml(line)}</text>`,
+    )
+    .join("\n  ");
+
+  let pillNodes = "";
+  if (pillData.length) {
+    const pillY = bioLines.length ? ty + BIO_TO_PILL : ty + HEADING_TO_PILL;
+    const PILL_GAP = 8;
+    const radius = pillHeight / 2;
+    let px = innerX;
+    const parts: string[] = [];
+    for (const p of pillData) {
+      const rectY = pillY - pillHeight / 2 - 1;
+      const textY = pillY + 1;
+      // Fill via theme.accent at 0.18 + outline at 0.5 -- matching
+      // canvas's rgba(theme.accent, 0.18) / 0.5 treatment.
+      parts.push(
+        `<rect x="${px}" y="${rectY}" width="${p.w}" height="${pillHeight}" rx="${radius}" ry="${radius}" fill="${theme.accent}" fill-opacity="0.18" stroke="${theme.accent}" stroke-opacity="0.5" stroke-width="1"/>`,
+        `<text x="${px + p.pad}" y="${textY}" fill="${GLASS_TEXT}" font-family="ui-monospace, SFMono-Regular, monospace" font-size="${p.size}" font-weight="500">${escapeXml(p.text)}</text>`,
+      );
+      px += p.w + PILL_GAP;
+    }
+    pillNodes = parts.join("\n  ");
+  }
+
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">
+  <style>${glassStyles(loopDuration, loopText)}</style>
+  <defs>${glassDefs(theme)}</defs>
+  ${glassBackground(W, H, theme)}
+  ${glassCard(cardX, cardY, cardW, cardH, 18)}
+  ${headingNode}
+  ${bioNodes}
+  ${pillNodes}
+  ${glassFrame(W, H, 14)}
+</svg>`;
 }
 
-const template: CanvasTemplate = {
+const template: SvgTemplate = {
   id: "glass-about",
   name: "Glass About",
   description:
-    "Mesh gradient bg with a wide glass card carrying your bio, tags, and socials.",
-  kind: "canvas",
+    "Drifting mesh-gradient backdrop with a wide glass card carrying your bio and tag pills.",
+  kind: "svg",
   category: "about",
   family: "glass",
   width: 800,
   height: 320,
-  fps: 24,
   duration: 10,
   fields: ["name", "role", "org", "location", "bio", "tagline"],
-  renderFrame,
+  renderSvg,
 };
 
 export default template;

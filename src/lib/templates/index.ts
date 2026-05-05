@@ -120,9 +120,11 @@ export function buildSidebarFiles(
     .map((s) => {
       const t = getTemplate(s.templateId);
       if (!t) return null;
-      const ext = t.kind === "canvas" ? "gif" : "svg";
+      // Every template renders to SVG today (the glass family was ported
+      // off canvas/GIF). The extension stays hardcoded so the sidebar's
+      // file list matches what the editor's "Download all" zip emits.
       return {
-        name: `${filenameFor(s)}.${ext}`,
+        name: `${filenameFor(s)}.svg`,
         active: s.id === currentSectionId,
       };
     })

@@ -8,9 +8,8 @@ import {
   type TemplateTheme,
 } from "../lib/types";
 import { buildSidebarFiles, getTemplate } from "../lib/templates";
-import { encodeGif } from "../lib/encoder/encode";
 import { cleanInfo } from "../lib/info-utils";
-import { CanvasPreview, SvgPreview } from "./Preview";
+import { SvgPreview } from "./Preview";
 import { Button } from "./ui";
 
 type Props = {
@@ -59,30 +58,22 @@ export function FullStackPreview({
       for (const section of sections) {
         const template = getTemplate(section.templateId);
         if (!template) continue;
+        // Defensive narrow: every template should be `kind: "svg"` after
+        // the glass port. Skip gracefully if a canvas template ever
+        // sneaks back in -- the user gets the rest of the zip and we
+        // surface a non-fatal message.
+        if (template.kind !== "svg") {
+          continue;
+        }
         const familyDefault = FAMILY_DEFAULT_THEME[template.family];
         const theme: TemplateTheme = { ...familyDefault, ...globalTheme };
         const base = filenameFor(section);
-
         const sidebarFiles = buildSidebarFiles(sections, section.id, filenameFor);
-        if (template.kind === "svg") {
-          const svg = template.renderSvg(renderInfo, theme, loopDuration, {
-            loopText,
-            sidebarFiles,
-          });
-          zip.file(`${base}.svg`, svg);
-        } else {
-          setZipMsg(`Encoding ${base}.gif (${done + 1}/${sections.length})`);
-          const blob = await encodeGif({
-            template,
-            info: renderInfo,
-            theme,
-            loopDuration,
-            loopText,
-            sidebarFiles,
-          });
-          const buf = await blob.arrayBuffer();
-          zip.file(`${base}.gif`, buf);
-        }
+        const svg = template.renderSvg(renderInfo, theme, loopDuration, {
+          loopText,
+          sidebarFiles,
+        });
+        zip.file(`${base}.svg`, svg);
         done += 1;
         setZipMsg(`${done} / ${sections.length}`);
       }
@@ -176,14 +167,9 @@ export function FullStackPreview({
                     sidebarFiles={sidebarFiles}
                   />
                 ) : (
-                  <CanvasPreview
-                    template={template}
-                    info={info}
-                    theme={theme}
-                    loopDuration={loopDuration}
-                    loopText={loopText}
-                    sidebarFiles={sidebarFiles}
-                  />
+                  <div className="p-4 text-[11px] font-mono text-red-400">
+                    Unsupported template kind: {template.id}
+                  </div>
                 )}
               </div>
             );

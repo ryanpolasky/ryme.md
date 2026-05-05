@@ -7,7 +7,6 @@ import {
   type TemplateTheme,
 } from "../lib/types";
 import { buildSidebarFiles, getTemplate } from "../lib/templates";
-import { encodeGif, type EncodeProgress } from "../lib/encoder/encode";
 import { cleanInfo } from "../lib/info-utils";
 import { SectionInputs } from "./SectionInputs";
 import { Button } from "./ui";
@@ -85,51 +84,40 @@ export function SectionEditor({
   };
   const meta = CATEGORY_META[template.category];
 
-  const [busy, setBusy] = useState(false);
-  const [progress, setProgress] = useState<EncodeProgress | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  const ext = template.kind === "canvas" ? "gif" : "svg";
-  const fullFilename = `${filename}.${ext}`;
+  // Every template ships as `kind: "svg"` after the glass port. The
+  // narrow lets the rest of this component treat `template` as SvgTemplate
+  // without casts; the message also surfaces the regression early if
+  // someone reintroduces a canvas template down the line.
+  if (template.kind !== "svg") {
+    return (
+      <article className="rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-4">
+        <p className="text-sm text-red-400 font-mono">
+          Unsupported template kind: {template.id} ({template.kind})
+        </p>
+      </article>
+    );
+  }
 
-  const handleDownload = async () => {
+  const fullFilename = `${filename}.svg`;
+
+  const handleDownload = () => {
     // Clean once at the export boundary so the downloaded artifact never
     // contains stray whitespace, zero-width chars, or control bytes that
     // the live form happens to be holding mid-edit.
-    const renderInfo = cleanInfo(info);
-    if (template.kind === "svg") {
+    try {
+      const renderInfo = cleanInfo(info);
       const svg = template.renderSvg(renderInfo, theme, loopDuration, {
         loopText,
         sidebarFiles,
       });
       downloadBlob(new Blob([svg], { type: "image/svg+xml" }), fullFilename);
-      return;
-    }
-    setBusy(true);
-    setError(null);
-    setProgress({ phase: "render", current: 0, total: 1 });
-    try {
-      const blob = await encodeGif({
-        template,
-        info: renderInfo,
-        theme,
-        loopDuration,
-        loopText,
-        sidebarFiles,
-        onProgress: setProgress,
-      });
-      downloadBlob(blob, fullFilename);
+      setError(null);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "encoding failed");
-    } finally {
-      setBusy(false);
+      setError(e instanceof Error ? e.message : "render failed");
     }
   };
-
-  const pct =
-    progress && progress.total > 0
-      ? Math.round((progress.current / progress.total) * 100)
-      : 0;
 
   return (
     <article className="rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)]/50 overflow-hidden min-w-0">
@@ -181,23 +169,9 @@ export function SectionEditor({
 
         {/* Export */}
         <div className="flex items-center gap-3 flex-wrap pt-3 border-t border-[var(--color-border)]">
-          <Button
-            variant="primary"
-            onClick={handleDownload}
-            disabled={busy}
-          >
-            {busy
-              ? `${progress?.phase === "encode" ? "Encoding" : "Rendering"} ${pct}%`
-              : `Download ${ext.toUpperCase()}`}
+          <Button variant="primary" onClick={handleDownload}>
+            Download SVG
           </Button>
-          {busy && (
-            <div className="flex-1 min-w-[8rem] h-1 bg-[var(--color-surface-2)] rounded-full overflow-hidden">
-              <div
-                className="h-full bg-[var(--color-accent)] transition-[width] duration-150"
-                style={{ width: `${pct}%` }}
-              />
-            </div>
-          )}
           <span className="text-[11px] font-mono text-[var(--color-text-dim)] truncate">
             {fullFilename}
           </span>

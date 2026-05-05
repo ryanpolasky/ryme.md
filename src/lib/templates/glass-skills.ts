@@ -1,45 +1,46 @@
 import type {
-  CanvasTemplate,
-  Ctx2D,
   ProfileInfo,
+  RenderOptions,
+  SvgTemplate,
   TemplateTheme,
 } from "../types";
-import { MONO, SANS, rgba, roundRect } from "../canvas-utils";
-import {
-  GLASS_TEXT,
-  drawCanvasFrame,
-  drawGlassBackground,
-  drawGlassCard,
-} from "../glass-shared";
 import {
   chipWidth,
   fitChipFontSize,
   packChipsIntoRows,
 } from "../chip-layout";
+import {
+  GLASS_TEXT,
+  escapeXml,
+  glassBackground,
+  glassCard,
+  glassDefs,
+  glassFrame,
+  glassStyles,
+} from "../glass-svg-shared";
+
+/**
+ * Glass Stack -- skills SVG.
+ *
+ * Heading + sub-line + an unbounded chip rail. The card grows in height
+ * to accommodate every skill in `info.skills`; sibling consumers
+ * (Preview img sizing, the editor's render-area, /api/render) read the
+ * effective height through `intrinsicHeight`, which calls into the same
+ * `computeLayout` used by `renderSvg`. Both paths must agree exactly.
+ */
 
 const W = 800;
 const PAD = 30;
 const HEADING_TOP = 50;
 const SUB_TOP = 70;
 const ROWS_TOP = 92;
-
 const PILL_GAP = 8;
 const ROW_GAP = 8;
 
-/**
- * Pure layout computation. Used by both `renderFrame` and `intrinsicHeight`,
- * so the offscreen canvas (encoder), the live preview, and the Home gallery
- * all agree on the panel's effective height.
- *
- * Width measurement uses the proportional-mono approximation in
- * `chip-layout.ts` rather than `ctx.measureText`, so the layout is
- * deterministic without a 2D context. The visual difference is negligible
- * for monospace labels.
- */
 function computeLayout(info: ProfileInfo) {
   const skills = info.skills.filter(Boolean);
   const cardW = W - PAD * 2;
-  const cardInnerW = cardW - 64; // 32 px each side inside the card
+  const cardInnerW = cardW - 64;
 
   const sizes = [13, 12, 11, 10, 9];
   const chipPad = (s: number) => Math.max(8, Math.round(s * 0.85));
@@ -68,8 +69,7 @@ function computeLayout(info: ProfileInfo) {
   const blockH =
     rowCount === 0 ? 0 : rowCount * PILL_HEIGHT + (rowCount - 1) * ROW_GAP;
 
-  // Card geometry: heading (top) + chips (middle) + bottom padding.
-  const HEADING_AREA = ROWS_TOP - 28; // text takes up to ~24 px above ROWS_TOP
+  const HEADING_AREA = ROWS_TOP - 28;
   const BOTTOM_INNER_PAD = 30;
   const cardH = Math.max(
     140,
@@ -90,89 +90,82 @@ function computeLayout(info: ProfileInfo) {
   };
 }
 
-function renderFrame(
-  ctx: Ctx2D,
-  t: number,
+function renderSvg(
   info: ProfileInfo,
   theme: TemplateTheme,
   loopDuration: number,
-) {
+  options?: RenderOptions,
+): string {
+  const loopText = options?.loopText ?? true;
   const layout = computeLayout(info);
   const { H, cardW, pillSize, PILL_HEIGHT, widths, rows, skills, chipPad } =
     layout;
 
-  drawGlassBackground(ctx, t, loopDuration, theme, W, H);
-
   const cardX = PAD;
   const cardY = PAD;
   const cardH = H - PAD * 2;
-  drawGlassCard(ctx, cardX, cardY, cardW, cardH, 18);
-
-  ctx.textBaseline = "alphabetic";
-  ctx.textAlign = "left";
   const innerX = cardX + 32;
 
-  // Heading
-  ctx.fillStyle = GLASS_TEXT;
-  ctx.font = `700 28px ${SANS}`;
-  ctx.fillText("Stack", innerX, cardY + HEADING_TOP);
+  // ---- Heading + sub-line --------------------------------------------------
+  const headingNode = `<text x="${innerX}" y="${cardY + HEADING_TOP}" fill="${GLASS_TEXT}" font-family='"Inter", system-ui, sans-serif' font-size="28" font-weight="700">Stack</text>`;
 
-  // Sub-line
-  ctx.fillStyle = rgba(GLASS_TEXT, 0.55);
-  ctx.font = `400 13px ${SANS}`;
   const sub =
     skills.length === 0
       ? "No skills yet."
       : `${skills.length} ${skills.length === 1 ? "tool" : "tools"} I reach for`;
-  ctx.fillText(sub, innerX, cardY + SUB_TOP);
+  const subNode = `<text x="${innerX}" y="${cardY + SUB_TOP}" fill="${GLASS_TEXT}" opacity="0.55" font-family='"Inter", system-ui, sans-serif' font-size="13" font-weight="400">${escapeXml(sub)}</text>`;
 
-  if (skills.length === 0) {
-    drawCanvasFrame(ctx, W, H, 14);
-    return;
-  }
-
-  // Chip rows
-  ctx.font = `500 ${pillSize}px ${MONO}`;
-  for (let rowI = 0; rowI < rows.length; rowI++) {
-    const idxs = rows[rowI];
-    let xCursor = innerX;
-    const yTop = cardY + ROWS_TOP + rowI * (PILL_HEIGHT + ROW_GAP);
-    for (const i of idxs) {
-      const w = widths[i];
-      roundRect(ctx, xCursor, yTop, w, PILL_HEIGHT, PILL_HEIGHT / 2);
-      ctx.fillStyle = rgba(theme.accent, 0.18);
-      ctx.fill();
-      ctx.strokeStyle = rgba(theme.accent, 0.5);
-      ctx.lineWidth = 1;
-      ctx.stroke();
-      ctx.fillStyle = GLASS_TEXT;
-      ctx.fillText(
-        skills[i],
-        xCursor + chipPad,
-        yTop + PILL_HEIGHT / 2 + pillSize / 3,
-      );
-      xCursor += w + PILL_GAP;
+  // ---- Chips ---------------------------------------------------------------
+  let chipNodes = "";
+  if (skills.length) {
+    const radius = PILL_HEIGHT / 2;
+    const parts: string[] = [];
+    for (let rowI = 0; rowI < rows.length; rowI++) {
+      const idxs = rows[rowI];
+      const yTop = cardY + ROWS_TOP + rowI * (PILL_HEIGHT + ROW_GAP);
+      let xCursor = innerX;
+      for (const i of idxs) {
+        const w = widths[i];
+        // Vertical centering: the canvas version aligned the baseline at
+        // yTop + PILL_HEIGHT/2 + pillSize/3. We replicate the same offset
+        // so chip text reads at the optical center of the pill.
+        const textY = yTop + PILL_HEIGHT / 2 + pillSize / 3;
+        parts.push(
+          `<rect x="${xCursor}" y="${yTop}" width="${w}" height="${PILL_HEIGHT}" rx="${radius}" ry="${radius}" fill="${theme.accent}" fill-opacity="0.18" stroke="${theme.accent}" stroke-opacity="0.5" stroke-width="1"/>`,
+          `<text x="${xCursor + chipPad}" y="${textY}" fill="${GLASS_TEXT}" font-family="ui-monospace, SFMono-Regular, monospace" font-size="${pillSize}" font-weight="500">${escapeXml(skills[i])}</text>`,
+        );
+        xCursor += w + PILL_GAP;
+      }
     }
+    chipNodes = parts.join("\n  ");
   }
 
-  drawCanvasFrame(ctx, W, H, 14);
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">
+  <style>${glassStyles(loopDuration, loopText)}</style>
+  <defs>${glassDefs(theme)}</defs>
+  ${glassBackground(W, H, theme)}
+  ${glassCard(cardX, cardY, cardW, cardH, 18)}
+  ${headingNode}
+  ${subNode}
+  ${chipNodes}
+  ${glassFrame(W, H, 14)}
+</svg>`;
 }
 
-const template: CanvasTemplate = {
+const template: SvgTemplate = {
   id: "glass-skills",
   name: "Glass Stack",
   description:
-    "Mesh-gradient glass card with frosted pill tags. Card grows in height to fit your full stack.",
-  kind: "canvas",
+    "Glass card with frosted pill tags. The card grows in height to fit every tool you list.",
+  kind: "svg",
   category: "skills",
   family: "glass",
   width: 800,
   height: 240,
-  fps: 24,
   duration: 10,
   fields: ["skills"],
   intrinsicHeight: (info) => computeLayout(info).H,
-  renderFrame,
+  renderSvg,
 };
 
 export default template;
