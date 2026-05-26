@@ -110,7 +110,8 @@ export type TemplateFamily =
   | "sleek"
   | "code"
   | "neon"
-  | "blueprint";
+  | "blueprint"
+  | "pixelfarm";
 
 export const FAMILY_META: Record<
   TemplateFamily,
@@ -140,6 +141,10 @@ export const FAMILY_META: Record<
     label: "Blueprint",
     hint: "Engineering drawing - cyanotype paper, dimension lines, title block, approval stamp. Pure SVG.",
   },
+  pixelfarm: {
+    label: "Quaint",
+    hint: "Cozy farming-sim - wood-framed parchment, custom 5x7 pixel font, pixel-art sprites, earthy palette. Pure SVG.",
+  },
 };
 
 export const FAMILY_ORDER: TemplateFamily[] = [
@@ -149,6 +154,7 @@ export const FAMILY_ORDER: TemplateFamily[] = [
   "code",
   "neon",
   "blueprint",
+  "pixelfarm",
 ];
 
 export const FAMILY_DEFAULT_THEME: Record<TemplateFamily, TemplateTheme> = {
@@ -198,6 +204,18 @@ export const FAMILY_DEFAULT_THEME: Record<TemplateFamily, TemplateTheme> = {
     fg: "#f1ece1",
     accent: "#ffffff",
     muted: "#7d9fc4",
+  },
+  pixelfarm: {
+    // pixel-farm ignores `theme` at render time (it sources colors from
+    // the family-internal PALETTE in `pixelfarm-shared.ts`), but the
+    // global-theme pipeline still expects an entry here. Values mirror
+    // the four most prominent palette tones (parchment / ink / apple /
+    // wood-mid) so any UI that previews this entry as a swatch lands on
+    // the right vibe.
+    bg: "#f4e4bc",
+    fg: "#3d2818",
+    accent: "#d04a30",
+    muted: "#7a4a23",
   },
 };
 

@@ -36,6 +36,11 @@ import blueprintAbout from "./blueprint-about";
 import blueprintSkills from "./blueprint-skills";
 import blueprintGithubStats from "./blueprint-github-stats";
 import blueprintFooter from "./blueprint-footer";
+import pixelfarmHeader from "./pixelfarm-header";
+import pixelfarmAbout from "./pixelfarm-about";
+import pixelfarmSkills from "./pixelfarm-skills";
+import pixelfarmGithubStats from "./pixelfarm-github-stats";
+import pixelfarmFooter from "./pixelfarm-footer";
 
 export const templates: Template[] = [
   terminalHeader,
@@ -68,6 +73,11 @@ export const templates: Template[] = [
   blueprintSkills,
   blueprintGithubStats,
   blueprintFooter,
+  pixelfarmHeader,
+  pixelfarmAbout,
+  pixelfarmSkills,
+  pixelfarmGithubStats,
+  pixelfarmFooter,
 ];
 
 export function getTemplate(id: string): Template | undefined {
@@ -156,4 +166,8 @@ export {
   blueprintAbout,
   blueprintSkills,
   blueprintFooter,
+  pixelfarmHeader,
+  pixelfarmAbout,
+  pixelfarmSkills,
+  pixelfarmFooter,
 };

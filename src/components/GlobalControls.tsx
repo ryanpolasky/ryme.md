@@ -24,10 +24,14 @@ type Props = {
 // Show the loop toggle only for families where text itself fully disappears
 // and reappears over the cycle. Families with always-visible text (glass,
 // neon, blueprint) keep ambient/decorative motion but don't need this control.
+// Quaint (pixelfarm) belongs here too -- its pf-pop keyframe fades content
+// back to opacity 0 at 100%, so the wood-framed text vanishes between loops
+// just like the terminal cursor blink.
 const FAMILIES_WITH_TEXT_LOOP: TemplateFamily[] = [
   "terminal",
   "sleek",
   "code",
+  "pixelfarm",
 ];
 
 const themeKeys: (keyof TemplateTheme)[] = ["bg", "fg", "accent", "muted"];
