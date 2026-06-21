@@ -97,13 +97,11 @@ function TemplatePreview({
   );
 }
 
-// Highlighted by-family lineup we want shown in the showcase strip. There are
-// seven template families in total (terminal, glass, sleek, code, neon,
-// blueprint, pixelfarm/Quaint); the strip surfaces six in a 3x2 grid, one per
-// live-SVG family. Glass is the family left off because it renders to GIF and
-// the Home strip uses inline SVG previews. Five tiles are headers and the
-// blueprint-about rounds it out so the strip still shows section variety.
+// Highlighted by-family lineup shown in the showcase strip: one representative
+// template per shipped family, with blueprint-about rounding it out so the
+// strip shows section variety beyond headers.
 const SHOWCASE_TEMPLATE_IDS = [
+  "celestial-header",
   "sleek-header",
   "neon-header",
   "code-header",
@@ -386,7 +384,7 @@ function Showcase() {
       <div className="max-w-7xl mx-auto px-6 py-20 sm:py-28">
         <SectionLabel>The template gallery</SectionLabel>
         <h2 className="mt-2 text-[36px] sm:text-[52px] tracking-[-0.03em] leading-[1.05] text-[var(--color-text)] max-w-3xl">
-          Seven families. Endless combos. Pick a vibe.
+          Eight families. Endless combos. Pick a vibe.
         </h2>
         <p className="mt-5 max-w-2xl text-[15px] text-[var(--color-text-muted)] leading-relaxed">
           Every template renders right here in this page - what you see is

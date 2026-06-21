@@ -54,8 +54,10 @@
     color: var(--color-text);
   }
 
-  /* Thin scrollbar (visible always) */
-  .scrollbar-thin::-webkit-scrollbar { width: 6px; height: 6px; }
+  /* Thin scrollbar (visible always). Horizontal track (height) is kept
+     slimmer than the vertical one so the style-selector row's bar reads as
+     a hairline rather than a chunky bar under the chips. */
+  .scrollbar-thin::-webkit-scrollbar { width: 6px; height: 3px; }
   .scrollbar-thin::-webkit-scrollbar-thumb {
     background: var(--color-border-strong);
     border-radius: 999px;

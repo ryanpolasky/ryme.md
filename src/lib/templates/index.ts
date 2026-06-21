@@ -41,6 +41,12 @@ import pixelfarmAbout from "./pixelfarm-about";
 import pixelfarmSkills from "./pixelfarm-skills";
 import pixelfarmGithubStats from "./pixelfarm-github-stats";
 import pixelfarmFooter from "./pixelfarm-footer";
+// Celestial -- night-sky star chart family.
+import celestialHeader from "./celestial-header";
+import celestialAbout from "./celestial-about";
+import celestialSkills from "./celestial-skills";
+import celestialGithubStats from "./celestial-github-stats";
+import celestialFooter from "./celestial-footer";
 
 export const templates: Template[] = [
   terminalHeader,
@@ -78,6 +84,11 @@ export const templates: Template[] = [
   pixelfarmSkills,
   pixelfarmGithubStats,
   pixelfarmFooter,
+  celestialHeader,
+  celestialAbout,
+  celestialSkills,
+  celestialGithubStats,
+  celestialFooter,
 ];
 
 export function getTemplate(id: string): Template | undefined {
@@ -170,4 +181,8 @@ export {
   pixelfarmAbout,
   pixelfarmSkills,
   pixelfarmFooter,
+  celestialHeader,
+  celestialAbout,
+  celestialSkills,
+  celestialFooter,
 };

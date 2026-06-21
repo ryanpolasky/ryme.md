@@ -111,7 +111,9 @@ export type TemplateFamily =
   | "code"
   | "neon"
   | "blueprint"
-  | "pixelfarm";
+  | "pixelfarm"
+  // Celestial -- night-sky star chart (full 5-section family).
+  | "celestial";
 
 export const FAMILY_META: Record<
   TemplateFamily,
@@ -145,6 +147,10 @@ export const FAMILY_META: Record<
     label: "Quaint",
     hint: "Cozy farming-sim - wood-framed parchment, custom 5x7 pixel font, pixel-art sprites, earthy palette. Pure SVG.",
   },
+  celestial: {
+    label: "Celestial",
+    hint: "Night-sky star chart - twinkling stars, a drawn constellation, a star-catalogue skills sheet, and observatory-style stats. Airy serif, pure SVG.",
+  },
 };
 
 export const FAMILY_ORDER: TemplateFamily[] = [
@@ -155,6 +161,7 @@ export const FAMILY_ORDER: TemplateFamily[] = [
   "neon",
   "blueprint",
   "pixelfarm",
+  "celestial",
 ];
 
 export const FAMILY_DEFAULT_THEME: Record<TemplateFamily, TemplateTheme> = {
@@ -216,6 +223,15 @@ export const FAMILY_DEFAULT_THEME: Record<TemplateFamily, TemplateTheme> = {
     fg: "#3d2818",
     accent: "#d04a30",
     muted: "#7a4a23",
+  },
+  // Celestial maps these onto its star-chart palette via cePalette(): fg =
+  // stars/text, muted = dim text, accent = the gold constellation/rule/sparkle
+  // role, bg = the night-sky gradient (shaded top/mid/bottom).
+  celestial: {
+    bg: "#0e1530",
+    fg: "#eef2fb",
+    accent: "#d9b25b",
+    muted: "#9fb1d6",
   },
 };
 

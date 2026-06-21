@@ -23,7 +23,7 @@ Drop-in animated banners for your README. SVG and GIF, themable, rendered entire
 
 ## What is this
 
-**RyMe.md** is a browser-only generator for animated GitHub profile README banners. Pick a template family — _Glass_, _Sleek_, _Terminal_, or _Code_ — fill in your name, role, bio, and socials, and download a ready-to-paste SVG or GIF. Everything renders, animates, and encodes inside the tab. No server. No upload. No API keys. No analytics.
+**RyMe.md** is a browser-only generator for animated GitHub profile README banners. Pick a template family — _Terminal_, _Glass_, _Sleek_, _Code_, _Neon_, _Blueprint_, _Quaint_, or _Celestial_ — fill in your name, role, bio, and socials, and download a ready-to-paste SVG or GIF. Everything renders, animates, and encodes inside the tab. No server. No upload. No API keys. No analytics.
 
 The output is a single file you drop into your `username/username` repo and reference from your README. That's the whole deployment.
 
@@ -43,15 +43,18 @@ Static READMEs are so chopped, and the dozen "GitHub stats card" generators floa
 
 ## Template families
 
-| Family | Vibe | Output | Examples |
-|---|---|---|---|
-| **Glass** | Animated mesh gradient + glassmorphic card | GIF (canvas) | banner, about, sign-off |
-| **Sleek** | Editorial typography, accent bar, pill tags | SVG | hero, about card, sine-wave footer |
-| **Terminal** | Monospace, mac-window chrome, shell prompt | SVG | boot sequence, `$ cat ~/about.md`, logout |
-| **Code** | VS Code window, syntax-highlighted JSON / Markdown / output panel | SVG | profile.json, README.md, status bar |
-| **Neon** | Synthwave — magenta/cyan glow, scanlines, perspective grid | SVG | chromatic-aberration hero, holo-card, transmission sign-off |
+| Family | Vibe |
+|---|---|
+| **Terminal** | Monospace shell prompt with mac-window chrome |
+| **Glass** | Drifting mesh-gradient backdrop + glassmorphic card |
+| **Sleek** | Editorial typography, accent bar, pill tags |
+| **Code** | VS Code window with syntax highlighting and a typing cursor |
+| **Neon** | Synthwave — magenta/cyan glow, scanlines, perspective grid |
+| **Blueprint** | Engineering drawing — cyanotype paper, dimension lines, title block |
+| **Quaint** | Cozy farming-sim — wood-framed parchment, pixel-art sprites |
+| **Celestial** | Night-sky star chart — twinkling stars, a drawn constellation |
 
-Fifteen templates total, growing.
+Each family ships all five sections — header, about, skills, stats, footer — for **40 templates total**, growing.
 
 ## Quick start
 
@@ -268,11 +271,14 @@ and Web Workers (Chrome 69+, Firefox 105+, Safari 16.4+).
 
 ## Roadmap
 
-- [x] Glass family (canvas → GIF) — 3 templates
-- [x] Sleek family (editorial SVG) — 3 templates
-- [x] Terminal family (mac-window SVG) — 3 templates
-- [x] Code family (VS Code SVG) — 3 templates
-- [x] Neon cyberpunk family (synthwave SVG) — 3 templates
+- [x] Terminal family (mac-window) — 5 sections
+- [x] Glass family (mesh-gradient glass) — 5 sections
+- [x] Sleek family (editorial) — 5 sections
+- [x] Code family (VS Code) — 5 sections
+- [x] Neon family (synthwave) — 5 sections
+- [x] Blueprint family (engineering drawing) — 5 sections
+- [x] Quaint family (cozy farming-sim) — 5 sections
+- [x] Celestial family (night-sky star chart) — 5 sections
 - [x] GitHub profile scrape (public, unauthenticated)
 - [x] Per-section + global theme overrides
 - [x] Loop animation toggle

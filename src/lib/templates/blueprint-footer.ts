@@ -212,11 +212,10 @@ function renderSvg(
     <text font-family="ui-monospace, monospace" font-size="${STAMP_ARC_FONT}" letter-spacing="${STAMP_ARC_TRACK}" fill="${accent}">
       <textPath href="#stamp-top-arc" startOffset="50%" text-anchor="middle">CERTIFIED ENGINEER</textPath>
     </text>
-    <!-- Center stack: APPROVED, line, date -->
+    <!-- Center stack: APPROVED, line, rev -->
     <text x="0" y="0" text-anchor="middle" fill="${accent}" font-family="ui-monospace, monospace" font-size="13" font-weight="700" letter-spacing="1.6">APPROVED</text>
     <line x1="-30" y1="8" x2="30" y2="8" stroke="${accent}" stroke-width="1" stroke-opacity="0.7"/>
-    <text x="0" y="22" text-anchor="middle" fill="${accent}" font-family="ui-monospace, monospace" font-size="10" letter-spacing="1.5">REV 1.0</text>
-    <text x="0" y="36" text-anchor="middle" fill="${accent}" font-family="ui-monospace, monospace" font-size="9" letter-spacing="1.5" opacity="0.85">26.10.26</text>
+    <text x="0" y="24" text-anchor="middle" fill="${accent}" font-family="ui-monospace, monospace" font-size="10" letter-spacing="1.5">REV 1.0</text>
   </g>`;
 
   // ===== Title block (same 5-cell strip; SHEET reflects this section's

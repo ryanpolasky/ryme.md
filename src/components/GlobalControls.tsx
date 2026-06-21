@@ -32,6 +32,7 @@ const FAMILIES_WITH_TEXT_LOOP: TemplateFamily[] = [
   "sleek",
   "code",
   "pixelfarm",
+  "celestial",
 ];
 
 const themeKeys: (keyof TemplateTheme)[] = ["bg", "fg", "accent", "muted"];

@@ -95,11 +95,14 @@ function Editor() {
   const handleFamilyChange = (next: TemplateFamily) => {
     setGlobalTheme({});
     setSections((prev) =>
-      prev.map((s) => {
+      // Drop sections the target family doesn't provide (header-only preview
+      // families only ship a header) so we never render a mismatched
+      // cross-family section. Full families resolve every category.
+      prev.flatMap((s) => {
         const t = getTemplate(s.templateId);
-        if (!t) return s;
+        if (!t) return [s];
         const swapped = templateFor(next, t.category);
-        return swapped ? { ...s, templateId: swapped.id } : s;
+        return swapped ? [{ ...s, templateId: swapped.id }] : [];
       }),
     );
     setGlobalFamily(next);
