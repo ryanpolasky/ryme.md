@@ -238,8 +238,8 @@ export const INFO_FIELD_META: Record<
 > = {
   name: { label: "Name", placeholder: "Your Name" },
   role: { label: "Role", placeholder: "Software Engineer" },
-  org: { label: "Org / School", placeholder: "UT Dallas '26" },
-  location: { label: "Location", placeholder: "Dallas, TX" },
+  org: { label: "Org / School", placeholder: "Apple" },
+  location: { label: "Location", placeholder: "Grand Forks, ND" },
   tagline: {
     label: "Tagline",
     placeholder: "One short line. Keep it punchy.",
@@ -351,8 +351,8 @@ export type Template = CanvasTemplate | SvgTemplate;
 export const DEFAULT_INFO: ProfileInfo = {
   name: "Ryan Polasky",
   role: "Software Engineer",
-  org: "UT Dallas '26",
-  location: "Dallas, TX",
+  org: "Apple",
+  location: "Grand Forks, ND",
   tagline: "LLMs, iOS, infra. Recovering Java enjoyer.",
   bio: "I build things that turn LLM rollouts into accountable workflows. Lately: agent observability, replayable runs, and the kind of debugging tooling I wish existed when I started.",
   skills: [

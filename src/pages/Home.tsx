@@ -37,8 +37,8 @@ const DEMO_INFO: ProfileInfo = {
   ...DEFAULT_INFO,
   name: "Ryan Polasky",
   role: "Software Engineer",
-  org: "UT Dallas '26",
-  location: "Dallas, TX",
+  org: "Apple",
+  location: "Grand Forks, ND",
   tagline: "LLMs, iOS, infra. Recovering Java enjoyer.",
   bio: "I build things that turn LLM rollouts into accountable workflows. Lately: agent observability, replayable runs, and tooling I wish existed when I started.",
 };
