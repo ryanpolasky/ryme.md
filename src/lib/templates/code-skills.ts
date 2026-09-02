@@ -5,7 +5,7 @@ import type {
   TemplateTheme,
 } from "../types";
 import { fitUniformFontSize } from "../text-utils";
-import { resolveCodeSidebar } from "./code-shared";
+import { codeCursorTspan, resolveCodeSidebar } from "./code-shared";
 
 const escapeXml = (s: string) =>
   s
@@ -123,7 +123,6 @@ function renderSvg(
     TOP_PAD,
   } = computeLayout(info);
 
-  const cw = FONT_SIZE * 0.6;
   const editorContentX = editorX + GUTTER_W;
   const editorH = H - editorTop;
   const lineCount = codeLines.length;
@@ -152,6 +151,7 @@ function renderSvg(
         `<tspan fill="${PUNCT_COLOR}">] </tspan>` +
         `<tspan fill="${theme.accent}" font-weight="600">as const</tspan>` +
         `<tspan fill="${PUNCT_COLOR}">;</tspan>` +
+        codeCursorTspan(theme.fg) +
         close
       );
     }
@@ -212,11 +212,6 @@ function renderSvg(
     })
     .join("\n  ");
 
-  const lastIdx = lineCount - 1;
-  const cursorChars = codeLineToString(codeLines[lastIdx]).length;
-  const cursorY =
-    firstLineY + lastIdx * LINE_H - Math.round(FONT_SIZE * 0.85);
-
   // Sidebar files: when the editor passes the live section list via
   // options, that list drives the explorer; otherwise we fall back to
   // the family's static roster.
@@ -265,8 +260,6 @@ function renderSvg(
   <!-- Editor body -->
   ${editorLines}
 
-  <!-- Blinking cursor at end of last line -->
-  <rect x="${editorContentX + cursorChars * cw}" y="${cursorY}" width="2" height="${Math.round(FONT_SIZE * 1.2)}" fill="${theme.fg}" style="animation: blink 1s steps(1) infinite"/>
 </svg>`;
 }
 

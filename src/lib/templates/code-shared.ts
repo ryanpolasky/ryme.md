@@ -12,6 +12,13 @@ export const CODE_DEFAULT_SIDEBAR: { name: string; category: string }[] = [
   { name: "footer.md", category: "footer" },
 ];
 
+// Blinking caret rendered inline as the last <tspan> of a code line so it
+// sits flush after the final glyph in whatever monospace font renders.
+// Consumers must define a `blink` keyframe.
+export function codeCursorTspan(fill: string): string {
+  return `<tspan dx="-0.15em" fill="${fill}" font-weight="700" style="animation: blink 1s steps(1) infinite">|</tspan>`;
+}
+
 /**
  * Resolve which file list to render in the code sidebar:
  *   - if the editor passed `options.sidebarFiles`, use that list verbatim

@@ -5,7 +5,7 @@ import type {
   TemplateTheme,
 } from "../types";
 import { fitUniformFontSize } from "../text-utils";
-import { resolveCodeSidebar } from "./code-shared";
+import { codeCursorTspan, resolveCodeSidebar } from "./code-shared";
 
 const escapeXml = (s: string) =>
   s
@@ -40,6 +40,7 @@ function renderJsonLine(
   field: JsonField,
   hasComma: boolean,
   keyColor: string,
+  cursor: string,
 ): string {
   const keyText = `"${field.key}"`;
   const valueText = `"${field.value}"`;
@@ -50,6 +51,7 @@ function renderJsonLine(
     `<tspan fill="${PUNCT_COLOR}">: </tspan>` +
     `<tspan fill="${STRING_COLOR}">${escapeXml(valueText)}</tspan>` +
     (hasComma ? `<tspan fill="${PUNCT_COLOR}">,</tspan>` : "") +
+    cursor +
     `</text>`
   );
 }
@@ -102,7 +104,6 @@ function renderSvg(
     "mono",
   );
   const FONT_SIZE = fitInfo.size;
-  const cw = FONT_SIZE * 0.6; // mono em width
   const LINE_H = Math.max(20, Math.round(FONT_SIZE * 1.55));
 
   // Vertically place the JSON block inside the editor zone. The chrome
@@ -140,10 +141,13 @@ function renderSvg(
     cssClass: "cl0",
   });
   // Fields
+  // The cursor sits at the end of the last *value* line, as if the user
+  // just finished typing the last field.
   fittedFields.forEach((f, i) => {
     const hasComma = i < fittedFields.length - 1;
+    const cursor = hasComma ? "" : codeCursorTspan(theme.fg);
     lines.push({
-      svg: renderJsonLine(f, hasComma, theme.accent),
+      svg: renderJsonLine(f, hasComma, theme.accent, cursor),
       cssClass: `cl${i + 1}`,
     });
   });
@@ -152,17 +156,6 @@ function renderSvg(
     svg: `<text x="0" fill="${PUNCT_COLOR}">}</text>`,
     cssClass: `cl${lineCount - 1}`,
   });
-
-  // Cursor: positioned at the end of the last *value* line (just past the
-  // closing quote of the last field's value, after any comma). Looks like the
-  // user just finished typing the last field.
-  const lastFieldIdx = fittedFields.length - 1;
-  const lastRawLine =
-    lastFieldIdx >= 0 ? rawLines[lastFieldIdx + 1] : rawLines[0];
-  const cursorXOffset = lastRawLine.length;
-  const cursorLineIdx = lastFieldIdx >= 0 ? lastFieldIdx + 1 : 0;
-  const cursorY =
-    firstLineY + cursorLineIdx * LINE_H - Math.round(FONT_SIZE * 0.85);
 
   // Sidebar files (file tree). The active file ("profile.json") gets the
   // accent color and a subtle highlight bar.
@@ -272,8 +265,6 @@ function renderSvg(
   <!-- Editor body -->
   ${editorLines}
 
-  <!-- Blinking cursor at end of last value line -->
-  <rect x="${editorContentX + cursorXOffset * cw}" y="${cursorY}" width="2" height="${Math.round(FONT_SIZE * 1.2)}" fill="${theme.fg}" style="animation: blink 1s steps(1) infinite"/>
 </svg>`;
 }
 
