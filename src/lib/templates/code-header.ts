@@ -34,41 +34,24 @@ function buildFields(info: ProfileInfo): JsonField[] {
   return fields;
 }
 
-/**
- * Build a single line of the JSON object as positioned `<text>` segments,
- * using mono char width to advance x. `cw` is the per-character width at
- * the current font size.
- */
+// A single <text> with flowing <tspan>s so tokens (and the trailing comma)
+// hug each other regardless of which monospace font actually renders.
 function renderJsonLine(
   field: JsonField,
   hasComma: boolean,
-  cw: number,
   keyColor: string,
-): { svg: string; lineLength: number } {
-  // Layout: 2 chars indent | "key" | : | space | "value" | comma?
-  const segs: string[] = [];
-  let xc = 2; // indent
+): string {
   const keyText = `"${field.key}"`;
-  segs.push(
-    `<text x="${xc * cw}" fill="${keyColor}">${escapeXml(keyText)}</text>`,
-  );
-  xc += keyText.length;
-  segs.push(
-    `<text x="${xc * cw}" fill="${PUNCT_COLOR}">:</text>`,
-  );
-  xc += 2; // colon + space
   const valueText = `"${field.value}"`;
-  segs.push(
-    `<text x="${xc * cw}" fill="${STRING_COLOR}">${escapeXml(valueText)}</text>`,
+  return (
+    `<text x="0" xml:space="preserve">` +
+    `<tspan fill="${PUNCT_COLOR}">  </tspan>` +
+    `<tspan fill="${keyColor}">${escapeXml(keyText)}</tspan>` +
+    `<tspan fill="${PUNCT_COLOR}">: </tspan>` +
+    `<tspan fill="${STRING_COLOR}">${escapeXml(valueText)}</tspan>` +
+    (hasComma ? `<tspan fill="${PUNCT_COLOR}">,</tspan>` : "") +
+    `</text>`
   );
-  xc += valueText.length;
-  if (hasComma) {
-    segs.push(
-      `<text x="${xc * cw}" fill="${PUNCT_COLOR}">,</text>`,
-    );
-    xc += 1;
-  }
-  return { svg: segs.join(""), lineLength: xc };
 }
 
 function renderSvg(
@@ -159,8 +142,10 @@ function renderSvg(
   // Fields
   fittedFields.forEach((f, i) => {
     const hasComma = i < fittedFields.length - 1;
-    const r = renderJsonLine(f, hasComma, cw, theme.accent);
-    lines.push({ svg: r.svg, cssClass: `cl${i + 1}` });
+    lines.push({
+      svg: renderJsonLine(f, hasComma, theme.accent),
+      cssClass: `cl${i + 1}`,
+    });
   });
   // Close brace
   lines.push({

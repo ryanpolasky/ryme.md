@@ -133,30 +133,36 @@ function renderSvg(
   const firstLineY = editorTop + TOP_PAD + Math.round(FONT_SIZE * 0.85);
 
   const rendered = codeLines.map((ln) => {
+    // One <text> per line with flowing <tspan>s so punctuation hugs the
+    // preceding token regardless of which monospace font actually renders.
+    const open = `<text x="0" xml:space="preserve">`;
+    const close = `</text>`;
     if (ln.kind === "decl") {
       return (
-        `<text x="0" fill="${theme.accent}" font-weight="600">const</text>` +
-        `<text x="${cw * 6}" fill="${theme.fg}">stack</text>` +
-        `<text x="${cw * 12}" fill="${PUNCT_COLOR}">=</text>` +
-        `<text x="${cw * 14}" fill="${PUNCT_COLOR}">[</text>`
+        open +
+        `<tspan fill="${theme.accent}" font-weight="600">const</tspan>` +
+        `<tspan fill="${theme.fg}"> stack </tspan>` +
+        `<tspan fill="${PUNCT_COLOR}">= [</tspan>` +
+        close
       );
     }
     if (ln.kind === "close") {
       return (
-        `<text x="0" fill="${PUNCT_COLOR}">]</text>` +
-        `<text x="${cw * 2}" fill="${theme.accent}" font-weight="600">as</text>` +
-        `<text x="${cw * 5}" fill="${theme.accent}" font-weight="600">const</text>` +
-        `<text x="${cw * 10}" fill="${PUNCT_COLOR}">;</text>`
+        open +
+        `<tspan fill="${PUNCT_COLOR}">] </tspan>` +
+        `<tspan fill="${theme.accent}" font-weight="600">as const</tspan>` +
+        `<tspan fill="${PUNCT_COLOR}">;</tspan>` +
+        close
       );
     }
     // item
-    const indent = cw * 2;
     const quoted = `"${ln.value}"`;
     return (
-      `<text x="${indent}" fill="${STRING_COLOR}">${escapeXml(quoted)}</text>` +
-      (ln.trailing
-        ? `<text x="${indent + quoted.length * cw}" fill="${PUNCT_COLOR}">,</text>`
-        : "")
+      open +
+      `<tspan fill="${PUNCT_COLOR}">  </tspan>` +
+      `<tspan fill="${STRING_COLOR}">${escapeXml(quoted)}</tspan>` +
+      (ln.trailing ? `<tspan fill="${PUNCT_COLOR}">,</tspan>` : "") +
+      close
     );
   });
 
