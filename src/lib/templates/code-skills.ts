@@ -5,7 +5,7 @@ import type {
   TemplateTheme,
 } from "../types";
 import { fitUniformFontSize } from "../text-utils";
-import { resolveCodeSidebar } from "./code-shared";
+import { codeCursorTspan, resolveCodeSidebar } from "./code-shared";
 
 const escapeXml = (s: string) =>
   s
@@ -123,7 +123,6 @@ function renderSvg(
     TOP_PAD,
   } = computeLayout(info);
 
-  const cw = FONT_SIZE * 0.6;
   const editorContentX = editorX + GUTTER_W;
   const editorH = H - editorTop;
   const lineCount = codeLines.length;
@@ -133,30 +132,37 @@ function renderSvg(
   const firstLineY = editorTop + TOP_PAD + Math.round(FONT_SIZE * 0.85);
 
   const rendered = codeLines.map((ln) => {
+    // One <text> per line with flowing <tspan>s so punctuation hugs the
+    // preceding token regardless of which monospace font actually renders.
+    const open = `<text x="0" xml:space="preserve">`;
+    const close = `</text>`;
     if (ln.kind === "decl") {
       return (
-        `<text x="0" fill="${theme.accent}" font-weight="600">const</text>` +
-        `<text x="${cw * 6}" fill="${theme.fg}">stack</text>` +
-        `<text x="${cw * 12}" fill="${PUNCT_COLOR}">=</text>` +
-        `<text x="${cw * 14}" fill="${PUNCT_COLOR}">[</text>`
+        open +
+        `<tspan fill="${theme.accent}" font-weight="600">const</tspan>` +
+        `<tspan fill="${theme.fg}"> stack </tspan>` +
+        `<tspan fill="${PUNCT_COLOR}">= [</tspan>` +
+        close
       );
     }
     if (ln.kind === "close") {
       return (
-        `<text x="0" fill="${PUNCT_COLOR}">]</text>` +
-        `<text x="${cw * 2}" fill="${theme.accent}" font-weight="600">as</text>` +
-        `<text x="${cw * 5}" fill="${theme.accent}" font-weight="600">const</text>` +
-        `<text x="${cw * 10}" fill="${PUNCT_COLOR}">;</text>`
+        open +
+        `<tspan fill="${PUNCT_COLOR}">] </tspan>` +
+        `<tspan fill="${theme.accent}" font-weight="600">as const</tspan>` +
+        `<tspan fill="${PUNCT_COLOR}">;</tspan>` +
+        codeCursorTspan(theme.fg) +
+        close
       );
     }
     // item
-    const indent = cw * 2;
     const quoted = `"${ln.value}"`;
     return (
-      `<text x="${indent}" fill="${STRING_COLOR}">${escapeXml(quoted)}</text>` +
-      (ln.trailing
-        ? `<text x="${indent + quoted.length * cw}" fill="${PUNCT_COLOR}">,</text>`
-        : "")
+      open +
+      `<tspan fill="${PUNCT_COLOR}">  </tspan>` +
+      `<tspan fill="${STRING_COLOR}">${escapeXml(quoted)}</tspan>` +
+      (ln.trailing ? `<tspan fill="${PUNCT_COLOR}">,</tspan>` : "") +
+      close
     );
   });
 
@@ -206,11 +212,6 @@ function renderSvg(
     })
     .join("\n  ");
 
-  const lastIdx = lineCount - 1;
-  const cursorChars = codeLineToString(codeLines[lastIdx]).length;
-  const cursorY =
-    firstLineY + lastIdx * LINE_H - Math.round(FONT_SIZE * 0.85);
-
   // Sidebar files: when the editor passes the live section list via
   // options, that list drives the explorer; otherwise we fall back to
   // the family's static roster.
@@ -259,8 +260,6 @@ function renderSvg(
   <!-- Editor body -->
   ${editorLines}
 
-  <!-- Blinking cursor at end of last line -->
-  <rect x="${editorContentX + cursorChars * cw}" y="${cursorY}" width="2" height="${Math.round(FONT_SIZE * 1.2)}" fill="${theme.fg}" style="animation: blink 1s steps(1) infinite"/>
 </svg>`;
 }
 

@@ -5,7 +5,7 @@ import type {
   TemplateTheme,
 } from "../types";
 import { fitUniformFontSize } from "../text-utils";
-import { resolveCodeSidebar } from "./code-shared";
+import { codeCursorTspan, resolveCodeSidebar } from "./code-shared";
 
 const escapeXml = (s: string) =>
   s
@@ -34,41 +34,26 @@ function buildFields(info: ProfileInfo): JsonField[] {
   return fields;
 }
 
-/**
- * Build a single line of the JSON object as positioned `<text>` segments,
- * using mono char width to advance x. `cw` is the per-character width at
- * the current font size.
- */
+// A single <text> with flowing <tspan>s so tokens (and the trailing comma)
+// hug each other regardless of which monospace font actually renders.
 function renderJsonLine(
   field: JsonField,
   hasComma: boolean,
-  cw: number,
   keyColor: string,
-): { svg: string; lineLength: number } {
-  // Layout: 2 chars indent | "key" | : | space | "value" | comma?
-  const segs: string[] = [];
-  let xc = 2; // indent
+  cursor: string,
+): string {
   const keyText = `"${field.key}"`;
-  segs.push(
-    `<text x="${xc * cw}" fill="${keyColor}">${escapeXml(keyText)}</text>`,
-  );
-  xc += keyText.length;
-  segs.push(
-    `<text x="${xc * cw}" fill="${PUNCT_COLOR}">:</text>`,
-  );
-  xc += 2; // colon + space
   const valueText = `"${field.value}"`;
-  segs.push(
-    `<text x="${xc * cw}" fill="${STRING_COLOR}">${escapeXml(valueText)}</text>`,
+  return (
+    `<text x="0" xml:space="preserve">` +
+    `<tspan fill="${PUNCT_COLOR}">  </tspan>` +
+    `<tspan fill="${keyColor}">${escapeXml(keyText)}</tspan>` +
+    `<tspan fill="${PUNCT_COLOR}">: </tspan>` +
+    `<tspan fill="${STRING_COLOR}">${escapeXml(valueText)}</tspan>` +
+    (hasComma ? `<tspan fill="${PUNCT_COLOR}">,</tspan>` : "") +
+    cursor +
+    `</text>`
   );
-  xc += valueText.length;
-  if (hasComma) {
-    segs.push(
-      `<text x="${xc * cw}" fill="${PUNCT_COLOR}">,</text>`,
-    );
-    xc += 1;
-  }
-  return { svg: segs.join(""), lineLength: xc };
 }
 
 function renderSvg(
@@ -119,7 +104,6 @@ function renderSvg(
     "mono",
   );
   const FONT_SIZE = fitInfo.size;
-  const cw = FONT_SIZE * 0.6; // mono em width
   const LINE_H = Math.max(20, Math.round(FONT_SIZE * 1.55));
 
   // Vertically place the JSON block inside the editor zone. The chrome
@@ -157,27 +141,21 @@ function renderSvg(
     cssClass: "cl0",
   });
   // Fields
+  // The cursor sits at the end of the last *value* line, as if the user
+  // just finished typing the last field.
   fittedFields.forEach((f, i) => {
     const hasComma = i < fittedFields.length - 1;
-    const r = renderJsonLine(f, hasComma, cw, theme.accent);
-    lines.push({ svg: r.svg, cssClass: `cl${i + 1}` });
+    const cursor = hasComma ? "" : codeCursorTspan(theme.fg);
+    lines.push({
+      svg: renderJsonLine(f, hasComma, theme.accent, cursor),
+      cssClass: `cl${i + 1}`,
+    });
   });
   // Close brace
   lines.push({
     svg: `<text x="0" fill="${PUNCT_COLOR}">}</text>`,
     cssClass: `cl${lineCount - 1}`,
   });
-
-  // Cursor: positioned at the end of the last *value* line (just past the
-  // closing quote of the last field's value, after any comma). Looks like the
-  // user just finished typing the last field.
-  const lastFieldIdx = fittedFields.length - 1;
-  const lastRawLine =
-    lastFieldIdx >= 0 ? rawLines[lastFieldIdx + 1] : rawLines[0];
-  const cursorXOffset = lastRawLine.length;
-  const cursorLineIdx = lastFieldIdx >= 0 ? lastFieldIdx + 1 : 0;
-  const cursorY =
-    firstLineY + cursorLineIdx * LINE_H - Math.round(FONT_SIZE * 0.85);
 
   // Sidebar files (file tree). The active file ("profile.json") gets the
   // accent color and a subtle highlight bar.
@@ -287,8 +265,6 @@ function renderSvg(
   <!-- Editor body -->
   ${editorLines}
 
-  <!-- Blinking cursor at end of last value line -->
-  <rect x="${editorContentX + cursorXOffset * cw}" y="${cursorY}" width="2" height="${Math.round(FONT_SIZE * 1.2)}" fill="${theme.fg}" style="animation: blink 1s steps(1) infinite"/>
 </svg>`;
 }
 

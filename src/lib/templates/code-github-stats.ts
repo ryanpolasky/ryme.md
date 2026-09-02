@@ -12,7 +12,7 @@ import {
   escapeXml,
   languageBuckets,
 } from "./github-stats-utils";
-import { resolveCodeSidebar } from "./code-shared";
+import { codeCursorTspan, resolveCodeSidebar } from "./code-shared";
 
 // VS Code Dark+ syntax colors -- matches the rest of the code-* family.
 const KEY_COLOR = "#79c0ff";
@@ -157,7 +157,6 @@ function renderSvg(
     "mono",
   );
   const FONT_SIZE = fitInfo.size;
-  const cw = FONT_SIZE * 0.6;
   const LINE_H = Math.max(20, Math.round(FONT_SIZE * 1.55));
 
   // Vertically center the JSON block inside the editor zone.
@@ -171,33 +170,24 @@ function renderSvg(
       const y = firstLineY + i * LINE_H;
       const lineNo = i + 1;
 
-      let xc = 0; // running character offset inside the line
-      const segSvg = segs
-        .map((seg) => {
-          const x = Math.round(xc * cw);
-          xc += seg.text.length;
-          // Trim leading whitespace for the rendered text but keep its width via x.
-          // We DO want to render the spaces visually too, otherwise the punctuation
-          // char that follows will sit at the wrong x. The escapeXml path emits a
-          // plain-text span; SVG would normally collapse runs of whitespace, so we
-          // explicitly keep the text but rely on the explicit `x` of the *next*
-          // segment to rescue the line. Indent segments still emit their spaces.
-          return `<text x="${x}" fill="${seg.fill}" xml:space="preserve">${escapeXml(seg.text)}</text>`;
-        })
-        .join("");
+      // One <text> per line with flowing <tspan>s so punctuation hugs the
+      // preceding token regardless of which monospace font actually renders.
+      const segSvg =
+        `<text x="0" xml:space="preserve">` +
+        segs
+          .map(
+            (seg) =>
+              `<tspan fill="${seg.fill}">${escapeXml(seg.text)}</tspan>`,
+          )
+          .join("") +
+        (i === lineCount - 1 ? codeCursorTspan(theme.fg) : "") +
+        `</text>`;
       return `<g class="cl${i}">
     <text x="${editorX + GUTTER_W - 10}" y="${y}" fill="${theme.muted}" text-anchor="end" font-size="${Math.max(11, FONT_SIZE - 2)}">${lineNo}</text>
     <g transform="translate(${editorContentX} ${y})">${segSvg}</g>
   </g>`;
     })
     .join("\n  ");
-
-  // Cursor at end-of-last-line.
-  const lastLine = lines[lines.length - 1];
-  const cursorChars = lineToString(lastLine).length;
-  const cursorY =
-    firstLineY + (lineCount - 1) * LINE_H - Math.round(FONT_SIZE * 0.85);
-  const cursorX = editorContentX + Math.round(cursorChars * cw);
 
   // Animation: matches code-header staggered fade-in.
   let lineKfs = "";
@@ -282,8 +272,6 @@ function renderSvg(
   <!-- Editor body -->
   ${editorLines}
 
-  <!-- Blinking cursor at end of last line -->
-  <rect x="${cursorX}" y="${cursorY}" width="2" height="${Math.round(FONT_SIZE * 1.2)}" fill="${theme.fg}" style="animation: blink 1s steps(1) infinite"/>
 </svg>`;
 }
 
