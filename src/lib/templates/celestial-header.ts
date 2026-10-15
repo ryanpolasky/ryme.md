@@ -4,7 +4,7 @@ import type {
   SvgTemplate,
   TemplateTheme,
 } from "../types";
-import { fitFontSize, wrapByChars } from "../text-utils";
+import { fitFontSize, truncateToWidth, wrapByChars } from "../text-utils";
 import { cePalette, esc, mulberry32, SERIF } from "./celestial-shared";
 
 /**
@@ -104,8 +104,14 @@ function renderSvg(
   // --- Text block (left) ----------------------------------------------
   const textW = 420;
   const nameFit = fitFontSize(name, textW, [44, 37, 31, 26], "sans");
+  const eyebrow = truncateToWidth((role || "PROFILE").toUpperCase(), textW, 12, "mono", 4);
   const deckLines = tagline ? wrapByChars(tagline, Math.floor(textW / (14 * 0.5)), 2) : [];
-  const metaItems = [role, [org, location].filter(Boolean).join(" \u00B7 ")].filter(Boolean);
+  const metaItems = [org, location].filter(Boolean);
+  const metaText = wrapByChars(
+    metaItems.map((m) => m.toUpperCase()).join(" \u00B7 "),
+    Math.floor((W - M * 2) / (12 * 0.65 + 1.5)),
+    1,
+  ).join("");
 
   const eyebrowY = 128;
   const nameY = 168;
@@ -171,7 +177,7 @@ function renderSvg(
   <rect width="${W}" height="${H}" fill="url(#ceVig)"/>
 
   <!-- text -->
-  <text class="ce-eyebrow" x="${M}" y="${eyebrowY}" fill="${P.accent}" font-family="${SERIF}" font-size="12" letter-spacing="4">${esc((role || "PROFILE").toUpperCase())}</text>
+  <text class="ce-eyebrow" x="${M}" y="${eyebrowY}" fill="${P.accent}" font-family="${SERIF}" font-size="12" letter-spacing="4">${esc(eyebrow)}</text>
   <text class="ce-name" x="${M}" y="${nameY}" fill="${P.star}" font-family="${SERIF}" font-size="${nameFit.size}" letter-spacing="1">${esc(nameFit.text)}</text>
 
   <!-- gold star divider -->
@@ -186,7 +192,7 @@ function renderSvg(
   <!-- meta -->
   ${
     metaItems.length
-      ? `<text class="ce-meta" x="${M}" y="${metaY}" fill="${P.starDim}" font-family="${SERIF}" font-size="12" letter-spacing="1.5">${esc(metaItems.map((m) => m.toUpperCase()).join("    \u2726    "))}</text>`
+      ? `<text class="ce-meta" x="${M}" y="${metaY}" fill="${P.starDim}" font-family="${SERIF}" font-size="12" letter-spacing="1.5">${esc(metaText)}</text>`
       : ""
   }
 </svg>`;

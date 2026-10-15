@@ -3,7 +3,7 @@ import { FAMILY_DEFAULT_THEME } from "../src/lib/types.ts";
 const theme = FAMILY_DEFAULT_THEME.glass;
 const info = {
   name: "Ryan Polasky",
-  tagline: "LLMs, iOS, infra. Recovering Java enjoyer.",
+  tagline: "LLMs, iOS, infra. Learning Go eventually.",
   githubUsername: "ryanpolasky",
   socials: [],
 };

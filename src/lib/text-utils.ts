@@ -40,10 +40,11 @@ export function truncateToWidth(
   maxWidth: number,
   fontSize: number,
   kind: FontKind = "sans",
+  letterSpacing = 0,
 ): string {
   if (!text) return text;
-  const charPx = fontSize * CHAR_WIDTH_EM[kind];
-  const maxChars = Math.floor(maxWidth / charPx);
+  const charPx = fontSize * CHAR_WIDTH_EM[kind] + letterSpacing;
+  const maxChars = Math.floor((maxWidth + letterSpacing) / charPx);
   if (text.length <= maxChars) return text;
   if (maxChars < 2) return "…";
   let n = maxChars - 1; // reserve a slot for the ellipsis
@@ -116,8 +117,15 @@ export function wrapByChars(
   maxChars: number,
   maxLines: number,
 ): string[] {
-  if (!text.trim()) return [];
-  const words = text.trim().split(/\s+/);
+  if (!text.trim() || maxLines <= 0) return [];
+  maxChars = Math.max(1, Math.floor(maxChars));
+  const words = text.trim().split(/\s+/).flatMap((word) => {
+    const chunks: string[] = [];
+    for (let i = 0; i < word.length; i += maxChars) {
+      chunks.push(word.slice(i, i + maxChars));
+    }
+    return chunks;
+  });
   const lines: string[] = [];
   let cur = "";
   let consumed = 0;
@@ -142,10 +150,7 @@ export function wrapByChars(
   // Ellipsize if we couldn't fit everything.
   if (lines.length === maxLines && consumed < words.length) {
     const last = lines[lines.length - 1];
-    lines[lines.length - 1] =
-      last.length > maxChars - 1
-        ? last.slice(0, maxChars - 1).trimEnd() + "…"
-        : last + "…";
+    lines[lines.length - 1] = last.slice(0, maxChars - 1).trimEnd() + "…";
   }
   return lines;
 }

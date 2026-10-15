@@ -12,7 +12,12 @@ import {
   escapeXml,
   languageBuckets,
 } from "./github-stats-utils";
-import { codeCursorTspan, resolveCodeSidebar } from "./code-shared";
+import {
+  CODE_FIRST_LINE_OFFSET,
+  CODE_LINE_H,
+  codeCursorTspan,
+  resolveCodeSidebar,
+} from "./code-shared";
 
 // VS Code Dark+ syntax colors -- matches the rest of the code-* family.
 const KEY_COLOR = "#79c0ff";
@@ -125,8 +130,6 @@ function renderSvg(
 ): string {
   const loopText = options?.loopText ?? true;
   const W = 800;
-  // bumped to 320 so vertical-centering leaves more breathing room beneath
-  // the closing brace + cursor (300 left only ~9px of bottom pad).
   const H = 320;
   const DUR = `${loopDuration}s`;
 
@@ -157,12 +160,8 @@ function renderSvg(
     "mono",
   );
   const FONT_SIZE = fitInfo.size;
-  const LINE_H = Math.max(20, Math.round(FONT_SIZE * 1.55));
-
-  // Vertically center the JSON block inside the editor zone.
-  const blockH = lineCount * LINE_H;
-  const editorPaddingY = Math.round((editorH - blockH) / 2);
-  const firstLineY = editorTop + editorPaddingY + Math.round(FONT_SIZE * 0.85);
+  const LINE_H = CODE_LINE_H;
+  const firstLineY = editorTop + CODE_FIRST_LINE_OFFSET;
 
   // Build editor body: gutter line numbers + per-segment positioned text.
   const editorLines = lines
@@ -211,7 +210,7 @@ function renderSvg(
   const cursorKf = `@keyframes blink { 0%,49% { opacity: 1 } 50%,100% { opacity: 0 } }`;
 
   const css = `
-    text { font-family: ui-monospace, "JetBrains Mono", "SF Mono", Menlo, Consolas, monospace; font-size: ${FONT_SIZE}px; dominant-baseline: middle; }
+    text { font-family: ui-monospace, "JetBrains Mono", "SF Mono", Menlo, Consolas, monospace; dominant-baseline: middle; }
     ${lineKfs}
     ${cursorKf}
     ${lineRules}
@@ -241,7 +240,7 @@ function renderSvg(
 
   const accent = theme.accent;
 
-  return `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" font-size="${FONT_SIZE}">
   <style>${css}</style>
   <rect width="100%" height="100%" fill="${theme.bg}" rx="14" ry="14"/>
 

@@ -60,8 +60,13 @@ function renderSvg(
     role,
     [org, location].filter(Boolean).join(" \u00B7 "),
   ].filter(Boolean);
+  const metaText = wrapByChars(
+    metaItems.map((m) => m.toUpperCase()).join("    \u2726    "),
+    Math.floor((W - M * 2) / (12 * 0.65 + 1.5)),
+    1,
+  ).join("");
   const meta = metaItems.length
-    ? `<text class="ce-meta" x="${M}" y="262" fill="${P.starDim}" font-family="${SERIF}" font-size="12" letter-spacing="1.5">${esc(metaItems.map((m) => m.toUpperCase()).join("    \u2726    "))}</text>`
+    ? `<text class="ce-meta" x="${M}" y="262" fill="${P.starDim}" font-family="${SERIF}" font-size="12" letter-spacing="1.5">${esc(metaText)}</text>`
     : "";
 
   // Decorative mini-constellation, top-right. Static faint lines + twinkling

@@ -138,7 +138,7 @@ function renderSvg(
     : Math.floor(INNER_W * 0.55);
   const pillFit = fitUniformFontSize(
     pills,
-    perPillCap,
+    perPillCap - PILL_PAD_X * 2,
     [pillSize],
     "mono",
   );

@@ -4,7 +4,7 @@ import type {
   SvgTemplate,
   TemplateTheme,
 } from "../types";
-import { fitUniformFontSize } from "../text-utils";
+import { fitUniformFontSize, truncateToWidth } from "../text-utils";
 import {
   chipWidth,
   fitChipFontSize,
@@ -32,7 +32,7 @@ function computeLayout(info: ProfileInfo) {
   const PAD_X = 56;
 
   const skills = info.skills.filter(Boolean);
-  const labels = skills.map((s) => s.toUpperCase());
+  let labels = skills.map((s) => s.toUpperCase());
 
   const HEADING_AREA_TOP = 56;
   const SUBHEAD_GAP = 48;
@@ -56,7 +56,8 @@ function computeLayout(info: ProfileInfo) {
     Number.MAX_SAFE_INTEGER,
     "mono",
   );
-  const widths = labels.map((l) => chipWidth(l, pillSize, PILL_PAD_X, "mono"));
+  labels = labels.map((l) => truncateToWidth(l, ROW_INNER_W - PILL_PAD_X * 2, pillSize, "mono", 0.8));
+  const widths = labels.map((l) => chipWidth(l, pillSize, PILL_PAD_X, "mono") + Math.max(0, l.length - 1) * 0.8);
   const { rows } = packChipsIntoRows(
     widths,
     ROW_INNER_W,
@@ -189,7 +190,7 @@ function renderSvg(
   }
 
   const css = `
-    text { font-family: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+    svg { font-family: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
     ${keyframes.join("\n    ")}
     ${rules.join("\n    ")}
   `;

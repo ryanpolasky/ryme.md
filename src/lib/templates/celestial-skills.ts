@@ -4,7 +4,7 @@ import type {
   SvgTemplate,
   TemplateTheme,
 } from "../types";
-import { truncateToWidth } from "../text-utils";
+import { wrapByChars } from "../text-utils";
 import {
   BASE_KEYFRAMES,
   cePalette,
@@ -51,7 +51,7 @@ function renderSvg(
       const row = Math.floor(i / COLS);
       const x = M + col * (colW + COL_GAP);
       const y = LIST_TOP + row * ROW_H;
-      const label = truncateToWidth(s, colW - 64, 14, "sans");
+      const label = wrapByChars(s, Math.floor((colW - 80) / (14 * 0.75)), 1).join("");
       const mag = (1.2 + ((i * 7) % 9) * 0.3).toFixed(1);
       return `<g class="ce-row ce-row-${i}">
       ${sparkle(x + 7, y - 4, 4.5, P.accent)}

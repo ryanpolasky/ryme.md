@@ -201,7 +201,7 @@ function renderSvg(
   const cursorKf = `@keyframes blink { 0%,49% { opacity: 1 } 50%,100% { opacity: 0 } }`;
 
   const css = `
-    text { font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; font-size: 13px; dominant-baseline: middle; }
+    text { font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; dominant-baseline: middle; }
     ${keyframes.join("\n    ")}
     ${cursorKf}
     ${rowStyles.join("\n    ")}
@@ -216,7 +216,7 @@ function renderSvg(
     ? `${fullNumber(stats.contributionCalendar?.totalContributions ?? null)} contributions · @${handle}`
     : `# awaiting stats...`;
 
-  return `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" font-size="13">
   <style>${css}</style>
   <rect width="100%" height="100%" fill="${theme.bg}" rx="14" ry="14"/>
   <g opacity="0.5">

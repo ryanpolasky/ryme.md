@@ -255,7 +255,7 @@ export const INFO_FIELD_META: Record<
   name: { label: "Name", placeholder: "Your Name" },
   role: { label: "Role", placeholder: "Software Engineer" },
   org: { label: "Org / School", placeholder: "Apple" },
-  location: { label: "Location", placeholder: "Grand Forks, ND" },
+  location: { label: "Location", placeholder: "Cupertino, CA" },
   tagline: {
     label: "Tagline",
     placeholder: "One short line. Keep it punchy.",
@@ -368,8 +368,8 @@ export const DEFAULT_INFO: ProfileInfo = {
   name: "Ryan Polasky",
   role: "Software Engineer",
   org: "Apple",
-  location: "Grand Forks, ND",
-  tagline: "LLMs, iOS, infra. Recovering Java enjoyer.",
+  location: "Cupertino, CA",
+  tagline: "LLMs, iOS, infra. Learning Go eventually.",
   bio: "I build things that turn LLM rollouts into accountable workflows. Lately: agent observability, replayable runs, and the kind of debugging tooling I wish existed when I started.",
   skills: [
     "TypeScript",

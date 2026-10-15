@@ -22,7 +22,7 @@ function renderSvg(
 ): string {
   const loopText = options?.loopText ?? true;
   const W = 800;
-  const H = 320;
+  const H = 340;
   const PAD_X = 40;
   const TOP = 68;
   const LINE_H = 22;
@@ -161,13 +161,13 @@ function renderSvg(
   void readyIdx; // silence unused warning if added later
 
   const css = `
-    text { font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; font-size: ${FONT_SIZE}px; dominant-baseline: middle; }
+    text { font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; dominant-baseline: middle; }
     ${keyframes.join("\n    ")}
     ${cursorKey}
     ${rowStyles.join("\n    ")}
   `;
 
-  return `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" font-size="${FONT_SIZE}">
   <style>${css}</style>
   <rect width="100%" height="100%" fill="${theme.bg}" rx="14" ry="14"/>
   <g opacity="0.5">
@@ -189,7 +189,7 @@ const template: SvgTemplate = {
   category: "about",
   family: "terminal",
   width: 800,
-  height: 320,
+  height: 340,
   duration: 12,
   fields: ["name", "role", "org", "location", "bio", "tagline"],
   renderSvg,

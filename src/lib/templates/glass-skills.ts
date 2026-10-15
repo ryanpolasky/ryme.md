@@ -4,6 +4,7 @@ import type {
   SvgTemplate,
   TemplateTheme,
 } from "../types";
+import { truncateToWidth } from "../text-utils";
 import {
   chipWidth,
   fitChipFontSize,
@@ -38,7 +39,7 @@ const PILL_GAP = 8;
 const ROW_GAP = 8;
 
 function computeLayout(info: ProfileInfo) {
-  const skills = info.skills.filter(Boolean);
+  let skills = info.skills.filter(Boolean);
   const cardW = W - PAD * 2;
   const cardInnerW = cardW - 64;
 
@@ -55,6 +56,7 @@ function computeLayout(info: ProfileInfo) {
     "mono",
   );
   const PILL_HEIGHT = Math.max(20, Math.round(pillSize * 1.95));
+  skills = skills.map((s) => truncateToWidth(s, cardInnerW - chipPad(pillSize) * 2, pillSize, "mono"));
   const widths = skills.map((s) =>
     chipWidth(s, pillSize, chipPad(pillSize), "mono"),
   );

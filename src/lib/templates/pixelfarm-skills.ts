@@ -45,7 +45,7 @@ const COLS = 6;
 const TILE_GAP = 14;
 const TILE_H = 60;
 const TILE_ROW_GAP = 16;
-const MAX_SKILLS = 18; // 3 rows of 6; anything more truncates
+const MAX_SKILLS = 999;
 
 // Layout gaps.
 const PAD_TOP = 24;
@@ -110,8 +110,6 @@ function renderSvg(
   ).svg;
   const HEADER_W_PX = measurePixelText(HEADER_TEXT, HEADER_SCALE);
 
-  // Subtle counter on the right: "12 / 18" pixel-font count of how many
-  // skills filled the inventory. Stardew-style "X / Y" tooltip.
   const counterText = `${skills.length} / ${MAX_SKILLS}`;
   const COUNTER_SCALE = 2;
   const counterW = measurePixelText(counterText, COUNTER_SCALE);
@@ -229,10 +227,11 @@ function renderSvg(
       : "";
 
   // -- Animations --------------------------------------------------------
+  const tileStagger = skills.length > 1 ? Math.min(0.015, 0.3 / (skills.length - 1)) : 0;
   const tileDelays = skills
     .map(
       (_, i) =>
-        `.pf-tile-${i} { animation-delay: ${(loopDuration * (0.08 + i * 0.015)).toFixed(2)}s; }`,
+        `.pf-tile-${i} { animation-delay: ${(loopDuration * (0.08 + i * tileStagger)).toFixed(2)}s; }`,
     )
     .join("\n    ");
 

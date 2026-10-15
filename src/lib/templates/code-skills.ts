@@ -4,8 +4,13 @@ import type {
   SvgTemplate,
   TemplateTheme,
 } from "../types";
-import { fitUniformFontSize } from "../text-utils";
-import { codeCursorTspan, resolveCodeSidebar } from "./code-shared";
+import { fitUniformFontSize, truncateToWidth } from "../text-utils";
+import {
+  CODE_FIRST_LINE_OFFSET,
+  CODE_LINE_H,
+  codeCursorTspan,
+  resolveCodeSidebar,
+} from "./code-shared";
 
 const escapeXml = (s: string) =>
   s
@@ -67,7 +72,7 @@ function computeLayout(info: ProfileInfo) {
   const editorBodyW = W - editorX - GUTTER_W - RIGHT_PAD;
 
   const skills = info.skills.filter(Boolean);
-  const codeLines = buildLines(skills);
+  let codeLines = buildLines(skills);
   const rawLines = codeLines.map(codeLineToString);
 
   const fitInfo = fitUniformFontSize(
@@ -77,12 +82,20 @@ function computeLayout(info: ProfileInfo) {
     "mono",
   );
   const FONT_SIZE = fitInfo.size;
-  const LINE_H = Math.max(20, Math.round(FONT_SIZE * 1.55));
+  const LINE_H = CODE_LINE_H;
+  codeLines = codeLines.map((ln) =>
+    ln.kind === "item"
+      ? {
+          ...ln,
+          value: truncateToWidth(ln.value, editorBodyW - 6 * FONT_SIZE * 0.6, FONT_SIZE, "mono"),
+        }
+      : ln,
+  );
   const lineCount = codeLines.length;
 
   // Editor padding (top + bottom) gives the code breathing room. Minimum
   // body height keeps short stacks (1-2 items) from looking cramped.
-  const TOP_PAD = 18;
+  const TOP_PAD = CODE_FIRST_LINE_OFFSET - LINE_H / 2;
   const BOTTOM_PAD = 22;
   const blockH = lineCount * LINE_H;
   const minBodyH = Math.max(blockH + TOP_PAD + BOTTOM_PAD, 120);
@@ -120,16 +133,13 @@ function renderSvg(
     FONT_SIZE,
     LINE_H,
     codeLines,
-    TOP_PAD,
   } = computeLayout(info);
 
   const editorContentX = editorX + GUTTER_W;
   const editorH = H - editorTop;
   const lineCount = codeLines.length;
 
-  // Top-anchored layout (no vertical centering -- the panel grows downward
-  // as content is added, which keeps the chrome stable across edits).
-  const firstLineY = editorTop + TOP_PAD + Math.round(FONT_SIZE * 0.85);
+  const firstLineY = editorTop + CODE_FIRST_LINE_OFFSET;
 
   const rendered = codeLines.map((ln) => {
     // One <text> per line with flowing <tspan>s so punctuation hugs the
@@ -189,7 +199,7 @@ function renderSvg(
   }
 
   const css = `
-    text { font-family: ui-monospace, "JetBrains Mono", "SF Mono", Menlo, Consolas, monospace; font-size: ${FONT_SIZE}px; dominant-baseline: middle; }
+    text { font-family: ui-monospace, "JetBrains Mono", "SF Mono", Menlo, Consolas, monospace; dominant-baseline: middle; }
     ${lineKfs}
     ${cursorKf}
     ${lineRules}
@@ -229,7 +239,7 @@ function renderSvg(
     })
     .join("\n  ");
 
-  return `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" font-size="${FONT_SIZE}">
   <style>${css}</style>
   <rect width="100%" height="100%" fill="${theme.bg}" rx="14" ry="14"/>
 

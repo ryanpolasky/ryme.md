@@ -4,7 +4,7 @@ import type {
   SvgTemplate,
   TemplateTheme,
 } from "../types";
-import { fitUniformFontSize } from "../text-utils";
+import { fitUniformFontSize, truncateToWidth } from "../text-utils";
 import {
   chipWidth,
   fitChipFontSize,
@@ -29,7 +29,7 @@ function computeLayout(info: ProfileInfo) {
   const W = 800;
   const skills = info.skills.filter(Boolean);
   // Decorative bracket prefix/suffix on each chip.
-  const labels = skills.map((s) => `[ ${s} ]`);
+  let labels = skills.map((s) => `[ ${s} ]`);
   const ROW_INNER_W = W - PAD_X * 2 - 22; // leave room for the `$ ` prompt
 
   // Pick the chip font size; chip "padding" here is just inter-chip spacing
@@ -44,6 +44,7 @@ function computeLayout(info: ProfileInfo) {
     Number.MAX_SAFE_INTEGER,
     "mono",
   );
+  labels = skills.map((s) => `[ ${truncateToWidth(s, ROW_INNER_W - 4 * pillSize * 0.6, pillSize, "mono")} ]`);
   const widths = labels.map((l) => chipWidth(l, pillSize, 0, "mono"));
   const { rows } = packChipsIntoRows(
     widths,

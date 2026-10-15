@@ -4,8 +4,13 @@ import type {
   SvgTemplate,
   TemplateTheme,
 } from "../types";
-import { fitUniformFontSize } from "../text-utils";
-import { codeCursorTspan, resolveCodeSidebar } from "./code-shared";
+import { fitUniformFontSize, truncateToWidth } from "../text-utils";
+import {
+  CODE_FIRST_LINE_OFFSET,
+  CODE_LINE_H,
+  codeCursorTspan,
+  resolveCodeSidebar,
+} from "./code-shared";
 
 const escapeXml = (s: string) =>
   s
@@ -104,33 +109,17 @@ function renderSvg(
     "mono",
   );
   const FONT_SIZE = fitInfo.size;
-  const LINE_H = Math.max(20, Math.round(FONT_SIZE * 1.55));
-
-  // Vertically place the JSON block inside the editor zone. The chrome
-  // (title + tab bars) at the top adds visual weight, so a true centered
-  // layout leaves an empty band below the close brace. Bias the placement
-  // downward by EXTRA_TOP so the JSON visually balances against the chrome
-  // and the bottom feels less padded.
-  const EXTRA_TOP = 16;
-  const blockH = lineCount * LINE_H;
-  const editorPaddingY = Math.max(
-    12,
-    Math.round((editorH - blockH) / 2) + EXTRA_TOP,
-  );
-  const firstLineY = editorTop + editorPaddingY + Math.round(FONT_SIZE * 0.85);
-
-  // Rebuild fields from the (possibly truncated) raw lines so values that
-  // were trimmed at min size render correctly. We rebuild by parsing — but
-  // since fitUniformFontSize only truncates at min size, in practice rawLines
-  // matches what we want unless inputs are truly absurd. To stay robust,
-  // re-derive fields' values from the trimmed raw lines.
-  const fittedFields: JsonField[] = fields.map((f, i) => {
-    const trimmed = fitInfo.texts[i + 1]; // skip "{"
-    // Extract value between : "..." pattern. If it doesn't parse cleanly
-    // (truncation may have cut quotes), fall back to original.
-    const m = /^\s*"[^"]*":\s*"([^"]*)"?,?\s*$/.exec(trimmed);
-    return { key: f.key, value: m ? m[1] : f.value };
-  });
+  const LINE_H = CODE_LINE_H;
+  const firstLineY = editorTop + CODE_FIRST_LINE_OFFSET;
+  const fittedFields: JsonField[] = fields.map((f) => ({
+    key: f.key,
+    value: truncateToWidth(
+      f.value,
+      editorBodyW - (f.key.length + 10) * FONT_SIZE * 0.6,
+      FONT_SIZE,
+      "mono",
+    ),
+  }));
 
   // Build editor lines as SVG groups, each with class `.cl${i}` for animation.
   type Line = { svg: string; cssClass: string };
@@ -205,7 +194,7 @@ function renderSvg(
   }
 
   const css = `
-    text { font-family: ui-monospace, "JetBrains Mono", "SF Mono", Menlo, Consolas, monospace; font-size: ${FONT_SIZE}px; dominant-baseline: middle; }
+    text { font-family: ui-monospace, "JetBrains Mono", "SF Mono", Menlo, Consolas, monospace; dominant-baseline: middle; }
     ${lineKfs}
     ${cursorKf}
     ${lineRules}
@@ -231,7 +220,7 @@ function renderSvg(
     })
     .join("\n  ");
 
-  return `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" font-size="${FONT_SIZE}">
   <style>${css}</style>
   <!-- Window background -->
   <rect width="100%" height="100%" fill="${theme.bg}" rx="14" ry="14"/>

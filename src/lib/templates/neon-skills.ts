@@ -4,6 +4,7 @@ import type {
   SvgTemplate,
   TemplateTheme,
 } from "../types";
+import { truncateToWidth } from "../text-utils";
 import {
   chipWidth,
   fitChipFontSize,
@@ -50,10 +51,8 @@ const PILL_PAD_X = 12;
 
 function computeLayout(info: ProfileInfo) {
   const skills = info.skills.filter(Boolean);
-  const labels = skills.map((s) => s.toUpperCase());
+  let labels = skills.map((s) => s.toUpperCase());
 
-  // chip padding accounts for letter-spacing (~1px per char) so widths are
-  // an honest measure of the rendered chip.
   const chipPad = (s: number) =>
     PILL_PAD_X + Math.max(2, Math.round(s * 0.35));
 
@@ -68,7 +67,8 @@ function computeLayout(info: ProfileInfo) {
     "mono",
   );
   const PILL_H = Math.max(24, Math.round(pillSize * 2.1));
-  const widths = labels.map((l) => chipWidth(l, pillSize, chipPad(pillSize), "mono"));
+  labels = labels.map((l) => truncateToWidth(l, PILL_ROW_W - chipPad(pillSize) * 2, pillSize, "mono", 1));
+  const widths = labels.map((l) => chipWidth(l, pillSize, chipPad(pillSize), "mono") + Math.max(0, l.length - 1));
   const { rows } = packChipsIntoRows(
     widths,
     PILL_ROW_W,

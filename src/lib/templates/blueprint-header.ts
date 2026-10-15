@@ -4,7 +4,7 @@ import type {
   SvgTemplate,
   TemplateTheme,
 } from "../types";
-import { fitFontSize } from "../text-utils";
+import { fitFontSize, truncateToWidth } from "../text-utils";
 import { sheetIndexLabel } from "./blueprint-shared";
 
 const escapeXml = (s: string) =>
@@ -95,9 +95,9 @@ function renderSvg(
     [50, 44, 38, 32, 28, 24],
     "sans",
   );
-  const name = nameFit.text;
   const nameSize = nameFit.size;
   const nameTrack = Math.max(2, Math.round(nameSize * 0.12));
+  const name = truncateToWidth(nameFit.text, NAME_BUDGET, nameSize, "mono", nameTrack);
   // Visual width with tracking baked in. The 0.62 multiplier is a touch
   // wider than `sans` default (0.55) because uppercase + bold runs wide.
   const nameW = Math.min(

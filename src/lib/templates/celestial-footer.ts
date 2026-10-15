@@ -4,6 +4,7 @@ import type {
   SvgTemplate,
   TemplateTheme,
 } from "../types";
+import { fitFontSize, truncateToWidth } from "../text-utils";
 import {
   BASE_KEYFRAMES,
   cePalette,
@@ -39,6 +40,8 @@ function renderSvg(
   const cx = W / 2;
 
   const name = (info.name || "Your Name").trim();
+  const nameSize = fitFontSize(name, W - 96, [30, 26, 22, 18], "sans").size;
+  const shownName = truncateToWidth(name, W - 96, nameSize, "sans", 1);
   const socials = info.socials.filter((s) => s.value.trim());
 
   const labels = socials
@@ -87,7 +90,7 @@ function renderSvg(
   </g>
 
   <text class="ce-eyebrow" x="${cx}" y="${eyebrowY}" text-anchor="middle" fill="${P.accent}" font-family="${SERIF}" font-size="12" letter-spacing="5">THANKS FOR STOPPING BY</text>
-  <text class="ce-name" x="${cx}" y="${nameY}" text-anchor="middle" fill="${P.star}" font-family="${SERIF}" font-size="30" letter-spacing="1">${esc(name)}</text>
+  <text class="ce-name" x="${cx}" y="${nameY}" text-anchor="middle" fill="${P.star}" font-family="${SERIF}" font-size="${nameSize}" letter-spacing="1">${esc(shownName)}</text>
   <text class="ce-socials" x="${cx}" y="${socialsY}" text-anchor="middle" fill="${P.starDim}" font-family="${SERIF}" font-size="12" letter-spacing="2">${esc(socialLine)}</text>
   <text class="ce-credit" x="${cx}" y="${creditY}" text-anchor="middle" fill="${P.starDim}" fill-opacity="0.6" font-family="${SERIF}" font-size="9" letter-spacing="3">CHARTED ON RYME.MD</text>
 </svg>`;

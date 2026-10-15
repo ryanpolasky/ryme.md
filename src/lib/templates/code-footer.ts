@@ -6,6 +6,7 @@ import type {
 } from "../types";
 import { socialIconSvg } from "../social-icons";
 import { fitUniformFontSize } from "../text-utils";
+import { CODE_FIRST_LINE_OFFSET, CODE_LINE_H, codeCursorTspan } from "./code-shared";
 
 const escapeXml = (s: string) =>
   s
@@ -26,7 +27,7 @@ function renderSvg(
 ): string {
   const loopText = options?.loopText ?? true;
   const W = 800;
-  const H = 200;
+  const H = 216;
   const DUR = `${loopDuration}s`;
 
   const PANEL_HEADER_H = 32;
@@ -49,11 +50,7 @@ function renderSvg(
     }));
   const name = info.name || "you";
 
-  // Body where output lines render. Status bar sits at the bottom; panel
-  // header sits at the top.
   const bodyTop = PANEL_HEADER_H;
-  const bodyBottom = H - STATUS_H;
-  const bodyH = bodyBottom - bodyTop;
 
   // Compose the output lines as raw strings for measurement.
   // Format: command-style lines that look like build output
@@ -81,15 +78,10 @@ function renderSvg(
   );
   const FONT_SIZE = fitInfo.size;
   const cw = FONT_SIZE * 0.6;
-  const LINE_H = Math.max(18, Math.round(FONT_SIZE * 1.65));
+  const LINE_H = CODE_LINE_H;
 
-  // Vertically center the output block in the body.
   const totalLines = rawLines.length;
-  const blockH = totalLines * LINE_H;
-  const firstLineY =
-    bodyTop +
-    Math.max(8, Math.round((bodyH - blockH) / 2)) +
-    Math.round(FONT_SIZE * 0.85);
+  const firstLineY = bodyTop + CODE_FIRST_LINE_OFFSET;
 
   // Render rows. Index 0 = command, 1 = success, 2..= socials.
   type Row = { svg: string };
@@ -98,16 +90,16 @@ function renderSvg(
   rows.push({
     svg:
       `<text x="0" fill="${theme.accent}">$</text>` +
-      `<text x="${cw * 2}" fill="${theme.fg}">${escapeXml(`${name} --connect`)}</text>`,
+      `<text x="${cw * 2}" fill="${theme.fg}">${escapeXml(fitInfo.texts[0].slice(2))}</text>`,
   });
 
   rows.push({
     svg:
-      `<text x="0" fill="${SUCCESS_COLOR}">✓</text>` +
-      `<text x="${cw * 2}" fill="${theme.muted}">${escapeXml(successLine.slice(2))}</text>`,
+      `<text x="0" xml:space="preserve"><tspan fill="${SUCCESS_COLOR}">✓ </tspan>` +
+      `<tspan fill="${theme.muted}">${escapeXml(successLine.slice(2))}</tspan>${socials.length === 0 ? codeCursorTspan(theme.fg) : ""}</text>`,
   });
 
-  socials.forEach((s) => {
+  socials.forEach((s, i) => {
     // Indent 3, then icon, then small gap, then arrow + value.
     const indentX = cw * 3;
     const iconX = indentX;
@@ -115,8 +107,8 @@ function renderSvg(
     rows.push({
       svg:
         `<g transform="translate(${iconX} ${-ICON_W / 2})">${socialIconSvg(s.kind, ICON_W, theme.muted)}</g>` +
-        `<text x="${valueX}" fill="${PUNCT_COLOR}">→</text>` +
-        `<text x="${valueX + cw * 2}" fill="${theme.fg}">${escapeXml(s.value)}</text>`,
+        `<text x="${valueX}" xml:space="preserve"><tspan fill="${PUNCT_COLOR}">→ </tspan>` +
+        `<tspan fill="${theme.fg}">${escapeXml(s.value)}</tspan>${i === socials.length - 1 ? codeCursorTspan(theme.fg) : ""}</text>`,
     });
   });
 
@@ -142,7 +134,7 @@ function renderSvg(
   }
 
   const css = `
-    text { font-family: ui-monospace, "JetBrains Mono", "SF Mono", Menlo, Consolas, monospace; font-size: ${FONT_SIZE}px; dominant-baseline: middle; }
+    text { font-family: ui-monospace, "JetBrains Mono", "SF Mono", Menlo, Consolas, monospace; dominant-baseline: middle; }
     ${lineKfs}
     ${cursorKf}
     ${lineRules}
@@ -180,30 +172,7 @@ function renderSvg(
     })
     .join("\n  ");
 
-  // Cursor on the last social line (or the success line if no socials)
-  const cursorRow = totalLines - 1;
-  const cursorX = (() => {
-    if (socials.length === 0) {
-      // After successLine
-      return PAD_X + (successLine.length) * cw;
-    }
-    const last = socials[socials.length - 1];
-    return (
-      PAD_X +
-      cw * 3 +
-      ICON_W +
-      ICON_GAP +
-      cw * 2 +
-      last.value.length * cw
-    );
-  })();
-  const cursorY =
-    firstLineY + cursorRow * LINE_H - Math.round(FONT_SIZE * 0.85);
-
-  // Suppress fitInfo unused warning
-  void fitInfo;
-
-  return `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" font-size="${FONT_SIZE}">
   <style>${css}</style>
   <rect width="100%" height="100%" fill="${theme.bg}" rx="14" ry="14"/>
 
@@ -215,9 +184,6 @@ function renderSvg(
 
   <!-- Output body -->
   ${editorLines}
-
-  <!-- Blinking cursor -->
-  <rect x="${cursorX}" y="${cursorY}" width="2" height="${Math.round(FONT_SIZE * 1.2)}" fill="${theme.fg}" style="animation: blink 1s steps(1) infinite"/>
 
   <!-- Status bar -->
   <rect x="0" y="${H - STATUS_H}" width="${W}" height="${STATUS_H}" fill="${statusBg}"/>
@@ -265,7 +231,7 @@ const template: SvgTemplate = {
   category: "footer",
   family: "code",
   width: 800,
-  height: 200,
+  height: 216,
   duration: 10,
   fields: ["name", "socials"],
   renderSvg,

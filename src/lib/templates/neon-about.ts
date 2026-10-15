@@ -111,7 +111,7 @@ function renderSvg(
       )
     : 220;
   const pills = tags.map((t) => {
-    const fitted = fitFontSize(t, perPillCap, [PILL_FONT, 11, 10], "mono");
+    const fitted = fitFontSize(t, perPillCap - PILL_PAD * 2, [PILL_FONT, 11, 10], "mono");
     const labelW = fitted.text.length * (fitted.size * 0.6); // mono ~0.6em
     const pillW = Math.max(50, labelW + PILL_PAD * 2);
     return { text: fitted.text, size: fitted.size, w: pillW };

@@ -1,5 +1,8 @@
 import type { CodeSidebarFile, RenderOptions } from "../types";
 
+export const CODE_LINE_H = 22;
+export const CODE_FIRST_LINE_OFFSET = 24;
+
 // fallback file roster for code-family sidebars when no live section list
 // is provided (e.g. the welcome page's isolated previews). includes one
 // entry per category that has a code-* template; each consumer marks

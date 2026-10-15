@@ -4,8 +4,13 @@ import type {
   SvgTemplate,
   TemplateTheme,
 } from "../types";
-import { fitUniformFontSize, wrapByChars } from "../text-utils";
-import { resolveCodeSidebar } from "./code-shared";
+import { fitUniformFontSize, truncateToWidth, wrapByChars } from "../text-utils";
+import {
+  CODE_FIRST_LINE_OFFSET,
+  CODE_LINE_H,
+  codeCursorTspan,
+  resolveCodeSidebar,
+} from "./code-shared";
 
 const escapeXml = (s: string) =>
   s
@@ -112,57 +117,39 @@ function renderSvg(
   );
   const FONT_SIZE = fitInfo.size;
   const cw = FONT_SIZE * 0.6;
-  const LINE_H = Math.max(20, Math.round(FONT_SIZE * 1.55));
+  const LINE_H = CODE_LINE_H;
 
   // Re-wrap quote (bio) lines now that we know the size. At smaller sizes
   // we can fit more chars per line, which means the bio uses fewer lines.
   const charsPerLine = Math.floor(editorBodyW / cw);
   mdLines = buildMdLines(info, charsPerLine);
+  mdLines = mdLines.map((ln) => {
+    if (ln.kind === "blank") return ln;
+    const prefixLength = mdLineToString(ln).length - ln.text.length;
+    return {
+      ...ln,
+      text: truncateToWidth(ln.text, editorBodyW - (prefixLength + 1) * cw, FONT_SIZE, "mono"),
+    };
+  });
   const lineCount = mdLines.length;
 
-  // Vertically center.
-  const blockH = lineCount * LINE_H;
-  const editorPaddingY = Math.max(
-    8,
-    Math.round((editorH - blockH) / 2),
-  );
-  const firstLineY = editorTop + editorPaddingY + Math.round(FONT_SIZE * 0.85);
+  const firstLineY = editorTop + CODE_FIRST_LINE_OFFSET;
 
-  // Render each line as a positioned `<g>` with class `.cl${i}`. Hash, quote,
-  // list markers are colored differently from the body text.
+  let lastNonBlankIdx = lineCount - 1;
+  while (lastNonBlankIdx >= 0 && mdLines[lastNonBlankIdx].kind === "blank") {
+    lastNonBlankIdx--;
+  }
+
   type RenderedLine = { svg: string };
-  const rendered: RenderedLine[] = mdLines.map((ln) => {
+  const rendered: RenderedLine[] = mdLines.map((ln, i) => {
     if (ln.kind === "blank") return { svg: "" };
-    if (ln.kind === "h1") {
-      return {
-        svg:
-          `<text x="0" fill="${theme.accent}" font-weight="700">#</text>` +
-          `<text x="${cw * 2}" fill="${theme.fg}" font-weight="700">${escapeXml(ln.text)}</text>`,
-      };
-    }
-    if (ln.kind === "h2") {
-      return {
-        svg:
-          `<text x="0" fill="${theme.accent}" font-weight="600">##</text>` +
-          `<text x="${cw * 3}" fill="${theme.fg}" font-weight="600">${escapeXml(ln.text)}</text>`,
-      };
-    }
-    if (ln.kind === "quote") {
-      return {
-        svg:
-          `<text x="0" fill="${QUOTE_COLOR}">&gt;</text>` +
-          `<text x="${cw * 2}" fill="${theme.fg}">${escapeXml(ln.text)}</text>`,
-      };
-    }
-    if (ln.kind === "list") {
-      return {
-        svg:
-          `<text x="0" fill="${PUNCT_COLOR}">-</text>` +
-          `<text x="${cw * 2}" fill="${theme.fg}">${escapeXml(ln.text)}</text>`,
-      };
-    }
+    const raw = mdLineToString(ln);
+    const prefix = raw.slice(0, raw.length - ln.text.length);
+    const markerColor = ln.kind === "quote" ? QUOTE_COLOR
+      : ln.kind === "list" ? PUNCT_COLOR : theme.accent;
+    const weight = ln.kind === "h1" ? 700 : ln.kind === "h2" ? 600 : 400;
     return {
-      svg: `<text x="0" fill="${theme.fg}">${escapeXml(ln.text)}</text>`,
+      svg: `<text x="0" xml:space="preserve" font-weight="${weight}"><tspan fill="${markerColor}">${escapeXml(prefix)}</tspan><tspan fill="${theme.fg}">${escapeXml(ln.text)}</tspan>${i === lastNonBlankIdx ? codeCursorTspan(theme.fg) : ""}</text>`,
     };
   });
 
@@ -188,7 +175,7 @@ function renderSvg(
   }
 
   const css = `
-    text { font-family: ui-monospace, "JetBrains Mono", "SF Mono", Menlo, Consolas, monospace; font-size: ${FONT_SIZE}px; dominant-baseline: middle; }
+    text { font-family: ui-monospace, "JetBrains Mono", "SF Mono", Menlo, Consolas, monospace; dominant-baseline: middle; }
     ${lineKfs}
     ${cursorKf}
     ${lineRules}
@@ -212,18 +199,6 @@ function renderSvg(
     })
     .join("\n  ");
 
-  // Cursor at end of last non-blank line
-  let lastNonBlankIdx = lineCount - 1;
-  while (lastNonBlankIdx >= 0 && mdLines[lastNonBlankIdx].kind === "blank") {
-    lastNonBlankIdx--;
-  }
-  const cursorChars =
-    lastNonBlankIdx >= 0 ? mdLineToString(mdLines[lastNonBlankIdx]).length : 0;
-  const cursorY =
-    firstLineY +
-    (lastNonBlankIdx >= 0 ? lastNonBlankIdx : 0) * LINE_H -
-    Math.round(FONT_SIZE * 0.85);
-
   // Sidebar (file tree). First file's text-middle Y sits at editorTop + 38
   // so it clears the EXPLORER header above it. when the editor passes the
   // live section list via options, that list drives the explorer; otherwise
@@ -242,10 +217,7 @@ function renderSvg(
     })
     .join("\n  ");
 
-  // Suppress fitInfo unused warning - it was used for sizing.
-  void fitInfo;
-
-  return `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" font-size="${FONT_SIZE}">
   <style>${css}</style>
   <rect width="100%" height="100%" fill="${theme.bg}" rx="14" ry="14"/>
 
@@ -275,9 +247,6 @@ function renderSvg(
 
   <!-- Editor body -->
   ${editorLines}
-
-  <!-- Blinking cursor at end of last non-blank line -->
-  <rect x="${editorContentX + cursorChars * cw}" y="${cursorY}" width="2" height="${Math.round(FONT_SIZE * 1.2)}" fill="${theme.fg}" style="animation: blink 1s steps(1) infinite"/>
 </svg>`;
 }
 

@@ -8,6 +8,7 @@
     "dev:vite": "vite",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
+    "test:templates": "node --test scripts/test-template-layout.mjs",
     "preview": "vite preview",
     "icons": "node scripts/generate-icons.mjs",
     "pages:dev": "npm run dev",
