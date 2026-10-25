@@ -33,7 +33,11 @@ type MdLine =
   | { kind: "list"; text: string }
   | { kind: "para"; text: string };
 
-function buildMdLines(info: ProfileInfo, maxChars: number): MdLine[] {
+function buildMdLines(
+  info: ProfileInfo,
+  maxChars: number,
+  maxBioLines = 3,
+): MdLine[] {
   const lines: MdLine[] = [];
   const name = info.name || "Your Name";
   lines.push({ kind: "h1", text: `Hi, I'm ${name}` });
@@ -44,7 +48,7 @@ function buildMdLines(info: ProfileInfo, maxChars: number): MdLine[] {
   if (bio) {
     // Quote prefix is "> " (2 chars); wrap budget shrinks accordingly.
     const wrapBudget = Math.max(20, maxChars - 2);
-    const wrapped = wrapByChars(bio, wrapBudget, 3);
+    const wrapped = wrapByChars(bio, wrapBudget, maxBioLines);
     for (const w of wrapped) lines.push({ kind: "quote", text: w });
     lines.push({ kind: "blank" });
   }
@@ -87,7 +91,7 @@ function renderSvg(
 ): string {
   const loopText = options?.loopText ?? true;
   const W = 800;
-  const H = 320;
+  const H = 336;
   const DUR = `${loopDuration}s`;
 
   const TITLE_H = 30;
@@ -121,14 +125,25 @@ function renderSvg(
 
   // Re-wrap quote (bio) lines now that we know the size. At smaller sizes
   // we can fit more chars per line, which means the bio uses fewer lines.
+  // Give the bio however many lines are left after the fixed heading/tag
+  // rows so it wraps instead of truncating.
   const charsPerLine = Math.floor(editorBodyW / cw);
-  mdLines = buildMdLines(info, charsPerLine);
+  const capacity = Math.max(
+    1,
+    Math.floor((editorH - CODE_FIRST_LINE_OFFSET) / LINE_H),
+  );
+  const fixedLines = 2 /* h1 + blank */ + 1 /* trailing blank */ +
+    (info.role || info.org || info.location
+      ? 1 + [info.role, info.org, info.location].filter(Boolean).length
+      : 0);
+  const maxBioLines = Math.max(3, capacity - fixedLines);
+  mdLines = buildMdLines(info, charsPerLine, maxBioLines);
   mdLines = mdLines.map((ln) => {
     if (ln.kind === "blank") return ln;
     const prefixLength = mdLineToString(ln).length - ln.text.length;
     return {
       ...ln,
-      text: truncateToWidth(ln.text, editorBodyW - (prefixLength + 1) * cw, FONT_SIZE, "mono"),
+      text: truncateToWidth(ln.text, editorBodyW - prefixLength * cw, FONT_SIZE, "mono"),
     };
   });
   const lineCount = mdLines.length;
@@ -271,7 +286,7 @@ const template: SvgTemplate = {
   category: "about",
   family: "code",
   width: 800,
-  height: 320,
+  height: 336,
   duration: 12,
   fields: ["name", "role", "org", "location", "bio", "tagline"],
   renderSvg,
