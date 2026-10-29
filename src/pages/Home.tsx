@@ -625,7 +625,7 @@ function SiteFooter() {
             github
           </a>
           <a
-            href="https://www.linkedin.com/in/ryan-polasky/"
+            href="https://ryanpolasky.com"
             target="_blank"
             rel="noreferrer"
             className="hover:text-[var(--color-text)] transition-colors"
